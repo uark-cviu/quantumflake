@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quantumflake"
+version = "0.1.1"
+authors = [
+  { name="Your Name", email="you@example.com" },
+]
+description = "A framework for 2D material flake detection and classification."
+readme = "README.md" # You would create this file
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Image Recognition",
+]
+dependencies = [
+    "torch>=2.1",
+    "torchvision",
+    "ultralytics>=8.2",
+    "opencv-python-headless",
+    "Pillow",
+    "pyyaml",
+    "tqdm",
+    "matplotlib",
+    "seaborn",
+    "transformers",
+    "accelerate",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/your-username/quantumflake"
+"Bug Tracker" = "https://github.com/your-username/quantumflake/issues"
+
+[project.scripts]
+quantumflake = "quantumflake.cli:main"
