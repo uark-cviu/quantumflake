@@ -7,6 +7,8 @@
 
 The framework is designed for accessibility and extensibility, allowing researchers to rapidly analyze microscopy images and integrate custom models with minimal setup.
 
+You can test out the framework with your own images here: https://huggingface.co/spaces/sanpdy/quantum-flake-pipeline
+
 ---
 
 ## Key Features
