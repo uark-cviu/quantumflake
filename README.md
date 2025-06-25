@@ -25,7 +25,6 @@ You can test out the framework with your own images here: https://huggingface.co
 
     ```bash
     git clone https://github.com/sanpdy/quantumflake
-    cd quantumflake
     ```
 
 2.  **Install Dependencies:**
@@ -46,10 +45,10 @@ You can test out the framework with your own images here: https://huggingface.co
 
     ```
     quantumflake/
-    ├── weights/
-    │   ├── yolo-flake-detector.pt
-    │   └── flake-classifier.pt
-    └── ...
+    weights/
+    ├── yolo-flake-detector.pt
+    └── flake-classifier.pt
+    ...
     ```
 
     You can download the pre-trained weights (trained on Masubuchi et al.'s GMMDetector dataset) from Hugging Face:
