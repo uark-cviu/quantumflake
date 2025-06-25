@@ -23,7 +23,6 @@ class FlakePipeline:
         self.device = torch.device(self.cfg['device'])
         print(f"Initializing pipeline on device: {self.device}")
 
-        # --- This is the correct preprocessing, matching your training script ---
         self.preprocess = transforms.Compose([
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
@@ -98,7 +97,7 @@ class FlakePipeline:
             return final_results
         except Exception as e:
             print(f"An error occurred during processing: {e}")
-            raise # Re-raise for debugging
+            raise
 
     def _package_results(self, det_boxes, cls_indices, cls_confs):
         results = []

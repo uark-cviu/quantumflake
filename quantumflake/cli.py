@@ -7,7 +7,6 @@ from pathlib import Path
 from .pipeline import FlakePipeline
 from .utils.io import load_config, merge_configs
 
-# The path to the internal default config
 DEFAULT_CONFIG_PATH = Path(__file__).parent / 'cfg' / 'default.yaml'
 
 def main():
@@ -34,16 +33,13 @@ def main():
         help="Override config options, e.g., device=cuda:0 save_vis=True"
     )
 
-    # --- Placeholder for Train Command ---
+    # Placeholder for Train Command
     p_train = subparsers.add_parser("train", help="Train a model (detector or classifier).")
     p_train.add_argument("model", choices=['detector', 'classifier'], help="Which model to train.")
-    # ... add other training args ...
 
     args = parser.parse_args()
 
-    # --- Command Logic ---
     if args.command == "predict":
-        # Load base config and merge CLI overrides
         config = load_config(args.config)
         if args.opts:
             config = merge_configs(config, args.opts)
