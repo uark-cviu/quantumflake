@@ -7,9 +7,6 @@
 
 The framework is designed for accessibility and extensibility, allowing researchers to rapidly analyze microscopy images and integrate custom models with minimal setup.
 
-![Visualization Example](https://i.imgur.com/vHq0MvC.png)
-_Example of QuantumFlake identifying and classifying graphene flakes in a microscopy image._
-
 ---
 
 ## Key Features
@@ -26,7 +23,7 @@ _Example of QuantumFlake identifying and classifying graphene flakes in a micros
 1.  **Clone the Repository:**
 
     ```bash
-    git clone [https://github.com/sanpdy/quantumflake](https://github.com/sanpdy/quantumflake)
+    git clone https://github.com/sanpdy/quantumflake
     cd quantumflake
     ```
 
@@ -39,10 +36,13 @@ _Example of QuantumFlake identifying and classifying graphene flakes in a micros
 
 3.  **Place Pre-trained Weights:**
     Create a `weights` directory in the project root and place the pre-trained model files inside it.
+
     ```bash
     mkdir weights
     ```
+
     Your directory should look like this:
+
     ```
     quantumflake/
     ├── weights/
@@ -50,6 +50,14 @@ _Example of QuantumFlake identifying and classifying graphene flakes in a micros
     │   └── resnet18_flake.pt
     └── ...
     ```
+
+    You can download the pre-trained weights (trained on Masubuchi et al.'s GMMDetector dataset) from Hugging Face:
+
+- **Detector weights** (`yolo-flake.pt`):  
+  https://huggingface.co/sanpdy/yolo-flake-detector
+
+- **Classifier weights** (`flake-classifier.pt`):  
+  https://huggingface.co/sanpdy/flake-classifier
 
 ## Quickstart: Running Inference
 
@@ -157,10 +165,10 @@ quantumflake/
 The core inference pipeline is stable. Future development will focus on:
 
 - [ ] **Training Scripts:** Implementing flexible training loops for both the detector and classifier.
-- [ ] **Dataset Tools:** Adding utilities for converting annotations (e.g., from CVAT) and splitting datasets.
+- [ ] **Dataset Tools:** Adding utilities for converting annotations (e.g., from COCO) and splitting datasets.
 - [ ] **Model Export & Quantization:** Providing scripts to export models to ONNX and apply quantization for faster CPU inference.
 - [ ] **Automated Testing:** Building a full test suite with `pytest`.
 
 ## Contributing
 
-If you have suggestions, please open an issue to discuss it. Thanks!
+If you have suggestions, please open an issue to discuss it, or feel free to email me. Thanks!
