@@ -164,10 +164,10 @@ quantumflake/
 
 The core inference pipeline is stable. Future development will focus on:
 
-- [ ] **Training Scripts:** Implementing flexible training loops for both the detector and classifier.
-- [ ] **Dataset Tools:** Adding utilities for converting annotations (e.g., from COCO) and splitting datasets.
-- [ ] **Model Export & Quantization:** Providing scripts to export models to ONNX and apply quantization for faster CPU inference.
-- [ ] **Automated Testing:** Building a full test suite with `pytest`.
+- **Training Scripts:** Implementing flexible training loops for both the detector and classifier.
+- **Dataset Tools:** Adding utilities for converting annotations (e.g., from COCO) and splitting datasets.
+- **Model Export & Quantization:** Providing scripts to export models to ONNX and apply quantization for faster CPU inference.
+- **Automated Testing:** Building a full test suite with `pytest`.
 
 ## Contributing
 
