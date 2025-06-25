@@ -28,9 +28,6 @@ class FlakePipeline:
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
-        # -------------------------------------------------------------------------
-
-        # --- Load Models ---
         det_weights = resolve_path(self.cfg['models']['detector']['weights'])
         cls_weights = resolve_path(self.cfg['models']['classifier']['weights'])
         cls_params = self.cfg['models']['classifier']
@@ -75,11 +72,9 @@ class FlakePipeline:
             crops_pil = crop_flakes(img_bgr, boxes.xyxy)
             if not crops_pil: return []
             
-            # Preprocess the batch of cropped images using our defined transforms
             processed_crops = torch.stack([self.preprocess(c) for c in crops_pil]).to(self.device)
 
             with torch.no_grad():
-                # Call the model exactly as it was called during training (no material_id)
                 logits = self.classifier(processed_crops)
                 
                 probabilities = torch.nn.functional.softmax(logits, dim=1)
