@@ -47,7 +47,7 @@ You can test out the framework with your own images here: https://huggingface.co
     quantumflake/
     weights/
     ├── yolo-flake-detector.pt
-    └── flake-classifier.pt
+    └── flake-classifier.pth
     ...
     ```
 
@@ -56,7 +56,7 @@ You can test out the framework with your own images here: https://huggingface.co
 - **Detector weights** (`yolo-flake.pt`):  
   https://huggingface.co/sanpdy/yolo-flake-detector
 
-- **Classifier weights** (`flake-classifier.pt`):  
+- **Classifier weights** (`flake-classifier.pth`):  
   https://huggingface.co/sanpdy/flake-classifier
 
 ## Quickstart: Running Inference
@@ -135,7 +135,7 @@ models:
     iou_thresh: 0.45
 
   classifier:
-    weights: "weights/resnet18_flake.pt"
+    weights: "weights/resnet18_flake.pth"
     num_materials: 4
     material_dim: 64
 ```
