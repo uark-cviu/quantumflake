@@ -15,9 +15,8 @@ You can test out the framework with your own images here: https://huggingface.co
 
 - **One-Liner Inference:** Detect and classify all flakes in an image or directory using a single, simple command.
 - **Powerful & Flexible CLI:** A robust command-line interface allows for easy control over all inference parameters.
-- **Configuration-Driven:** Control everything—from model weights to confidence thresholds—via YAML files for reproducible and organized experiments.
+- **Configuration-Driven:** Control everything, from model weights to confidence thresholds, via YAML files for reproducible and organized experiments.
 - **Material-Aware Architecture:** The classifier is designed to incorporate material-specific information (though currently trained for image-only use), making it future-proof for more advanced models.
-- **Extensible by Design:** The modular structure makes it easy to swap out detection or classification models, add new utilities, or integrate the pipeline into other applications.
 - **Placeholder Stubs:** The framework includes placeholder files and a clear structure for future expansion into training, model exporting, and quantization.
 
 ## Installation
@@ -48,8 +47,8 @@ You can test out the framework with your own images here: https://huggingface.co
     ```
     quantumflake/
     ├── weights/
-    │   ├── yolo_flake.pt
-    │   └── resnet18_flake.pt
+    │   ├── yolo-flake-detector.pt
+    │   └── flake-classifier.pt
     └── ...
     ```
 
