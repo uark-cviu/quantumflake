@@ -53,7 +53,7 @@ You can test out the framework with your own images here: https://huggingface.co
 
     You can download the pre-trained weights (trained on Masubuchi et al.'s GMMDetector dataset) from Hugging Face:
 
-- **Detector weights** (`yolo-flake.pt`):  
+- **Detector weights** (`yolo-flake-detector-GMM.pt`):  
   https://huggingface.co/sanpdy/yolo-flake-detector
 
 - **Classifier weights** (`flake-classifier.pth`):  
