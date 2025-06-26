@@ -130,12 +130,12 @@ save_vis: false
 
 models:
   detector:
-    weights: "weights/yolo_flake.pt"
+    weights: "weights/yolo-flake-detector.pt"
     conf_thresh: 0.25
     iou_thresh: 0.45
 
   classifier:
-    weights: "weights/resnet18_flake.pth"
+    weights: "weights/flake-classifier.pth"
     num_materials: 4
     material_dim: 64
 ```
