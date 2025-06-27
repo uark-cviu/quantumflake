@@ -169,6 +169,7 @@ The core inference pipeline is stable. Future development will focus on:
 - **Model Export & Quantization:** Providing scripts to export models to ONNX and apply quantization for faster CPU inference.
 - **Automated Testing:** Building a full test suite with `pytest`.
 
-## Contributing
-
-If you have suggestions, please open an issue to discuss it, or feel free to email me. Thanks!
+## Contributors
+- Hugh Churchill - University of Arkansas
+- Khoa Luu - University of Arkansas
+- Nicholas Borys - Montana State University
