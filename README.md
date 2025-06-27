@@ -176,3 +176,7 @@ The core inference pipeline is stable. Future development will focus on:
 - Hugh Churchill - University of Arkansas
 - Nicholas Borys - Montana State University
 - Khoa Luu - University of Arkansas
+
+## Acknowledgement 
+
+This work is funded by [MonArk NSF Quantum Foundry](https://www.monarkfoundry.org/). 
