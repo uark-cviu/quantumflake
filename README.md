@@ -173,3 +173,6 @@ The core inference pipeline is stable. Future development will focus on:
 - Hugh Churchill - University of Arkansas
 - Khoa Luu - University of Arkansas
 - Nicholas Borys - Montana State University
+- Xuan-Bac Nguyen - University of Arkansas
+- Sankalp Pandey - University of Arkansas
+- Tim Faltermeier - Montana State University
