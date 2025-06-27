@@ -1,4 +1,4 @@
-device: "auto" 
+device: "mps" 
 output_dir: "runs/predict"
 save_vis: false
 

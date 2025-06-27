@@ -3,10 +3,12 @@
 import argparse
 import glob
 from pathlib import Path
+import os
 
 from .pipeline import FlakePipeline
 from .utils.io import load_config, merge_configs
 
+# The path to the internal default config
 DEFAULT_CONFIG_PATH = Path(__file__).parent / 'cfg' / 'default.yaml'
 
 def main():
@@ -33,9 +35,10 @@ def main():
         help="Override config options, e.g., device=cuda:0 save_vis=True"
     )
 
-    # Placeholder for Train Command
+    # --- Placeholder for Train Command ---
     p_train = subparsers.add_parser("train", help="Train a model (detector or classifier).")
     p_train.add_argument("model", choices=['detector', 'classifier'], help="Which model to train.")
+    # ... add other training args ...
 
     args = parser.parse_args()
 
@@ -44,17 +47,26 @@ def main():
         if args.opts:
             config = merge_configs(config, args.opts)
 
-        # Find image paths
-        image_paths = glob.glob(args.source, recursive=True)
+        source_path = Path(args.source)
+        image_paths = []
+        if source_path.is_dir():
+            print(f"Source is a directory. Searching for images in {source_path}...")
+            supported_exts = ['*.jpg', '*.jpeg', '*.png', '*.bmp', '*.tif', '*.tiff']
+            for ext in supported_exts:
+                pattern = os.path.join(args.source, '**', ext)
+                image_paths.extend(glob.glob(pattern, recursive=True))
+        else:
+            image_paths = glob.glob(args.source, recursive=True)
+
         if not image_paths:
             print(f"Error: No images found at '{args.source}'")
             return
+        
+        print(f"Found {len(image_paths)} image(s) to process.")
 
-        # Initialize and run pipeline
         pipeline = FlakePipeline(config)
         results = pipeline(image_paths)
 
-        # Print results to console
         print("\n--- Prediction Complete ---")
         for img_path, result_list in zip(image_paths, results):
             print(f"\n[+] Image: {Path(img_path).name}")
