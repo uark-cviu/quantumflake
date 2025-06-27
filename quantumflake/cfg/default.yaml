@@ -1,4 +1,4 @@
-device: "mps" 
+device: "cpu" # For GPU, use "cuda:0"
 output_dir: "runs/predict"
 save_vis: false
 
