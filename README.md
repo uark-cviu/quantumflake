@@ -24,7 +24,7 @@ You can test out the framework with your own images here: https://huggingface.co
 1.  **Clone the Repository:**
 
     ```bash
-    git clone [https://github.com/sanpdy/quantumflake](https://github.com/sanpdy/quantumflake)
+    git clone https://github.com/sanpdy/quantumflake
     cd quantumflake
     ```
 
@@ -40,7 +40,7 @@ You can test out the framework with your own images here: https://huggingface.co
     ```bash
     mkdir weights
     ```
-    You can download the official weights (trained on Masubuchi et al.'s GMMDetector dataset) from Hugging Face:
+    You can download the official weights from Hugging Face:
     - **Detector:** [yolo-flake-detector-GMM.pt](https://huggingface.co/sanpdy/yolo-flake-detector)
     - **Classifier:** [flake-classifier.pth](https://huggingface.co/sanpdy/flake-classifier)
 
@@ -107,8 +107,6 @@ The best model will be saved to `runs/detect/your_dataset/weights/best.pt`.
 
 ### Training a New Classifier
 
-The classifier uses the standard **ImageFolder format**.
-
 **1. Prepare Your Dataset:**
 
 - Create a dataset directory. Inside, create one subdirectory for each class you want to train. The folder name becomes the class label.
@@ -116,10 +114,10 @@ The classifier uses the standard **ImageFolder format**.
 
 ```
 my_classifier_dataset/
-├── monolayer/
+├── 1/
 │   ├── flake_01.png
 │   └── ...
-└── bilayer/
+└── 6/
     └── ...
 ```
 
