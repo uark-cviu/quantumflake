@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quantumflake"
-version = "0.1.1"
+version = "0.1.2"
 authors = [
-  { name="Your Name", email="you@example.com" },
+  { name="Sankalp Pandey", email="sankalpp@uark.edu" },
 ]
 description = "A framework for 2D material flake detection and classification."
-readme = "README.md" # You would create this file
+readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -33,8 +33,8 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/your-username/quantumflake"
-"Bug Tracker" = "https://github.com/your-username/quantumflake/issues"
+"Homepage" = "https://github.com/uark-cviu/quantumflake"
+"Bug Tracker" = "https://github.com/uark-cviu/quantumflake/issues"
 
 [project.scripts]
 quantumflake = "quantumflake.cli:main"
