@@ -6,6 +6,7 @@ from tqdm import tqdm
 import numpy as np
 import cv2
 import json
+import copy
 
 from .models.detector import load_detector
 from .models.classifier import FlakeLayerClassifier
@@ -18,16 +19,17 @@ class FlakePipeline:
         self.cfg = config
         self.device = torch.device(self.cfg['device'])
         print(f"Initializing pipeline on device: {self.device}")
-        ref_path_str = self.cfg.get('calibration_ref_path')
-        if ref_path_str:
-            ref_path = resolve_path(ref_path_str)
-            self.color_ref_bgr = cv2.imread(str(ref_path))
-            if self.color_ref_bgr is None:
-                print(f"WARNING: Color reference image not found at {ref_path}. Calibration will be skipped.")
-            else:
-                print(f"Color calibration reference loaded from: {ref_path}")
-        else:
-            self.color_ref_bgr = None
+        self.color_ref_bgr = None
+        use_calibration = self.cfg.get('use_calibration', True)
+        if use_calibration:
+            ref_path_str = self.cfg.get('calibration_ref_path')
+            if ref_path_str:
+                ref_path = resolve_path(ref_path_str)
+                self.color_ref_bgr = cv2.imread(str(ref_path))
+                if self.color_ref_bgr is None:
+                    print(f"WARNING: Color reference image not found at {ref_path}. Calibration will be skipped.")
+                else:
+                    print(f"Color calibration reference loaded from: {ref_path}")
 
         self.preprocess = transforms.Compose([
             transforms.Resize((224, 224)),
@@ -75,13 +77,16 @@ class FlakePipeline:
 
     def _process_single(self, image_path, save_vis):
         try:
-            orig_bgr = load_image(image_path)
+            orig_rgb = load_image(image_path)
+            orig_bgr = cv2.cvtColor(orig_rgb, cv2.COLOR_RGB2BGR)
+
             proc_bgr = orig_bgr
-            use_calibration = self.cfg.get('use_calibration', True)
-            if self.color_ref_bgr is not None and use_calibration:
+            calibration_active = False
+            if self.color_ref_bgr is not None:
                 print("Applying color calibration before processing...")
                 proc_bgr = self.calibration(self.color_ref_bgr, orig_bgr)
-
+                calibration_active = True
+            
             det_params = self.cfg['models']['detector']
             det_results = self.detector.predict(
                 source=proc_bgr, conf=det_params['conf_thresh'], iou=det_params['iou_thresh'], verbose=False
@@ -89,6 +94,7 @@ class FlakePipeline:
 
             boxes = det_results.boxes
             if not len(boxes): return []
+            
             crops_pil = crop_flakes(proc_bgr, boxes.xyxy)
             if not crops_pil: return []
 
@@ -100,12 +106,15 @@ class FlakePipeline:
                 cls_confs, cls_indices = torch.max(probabilities, 1)
 
             final_results = self._package_results(boxes, cls_indices.cpu(), cls_confs.cpu())
+
             if save_vis:
                 output_dir = resolve_path(self.cfg.get('output_dir', 'runs/predict'))
                 output_dir.mkdir(parents=True, exist_ok=True)
                 fname = Path(image_path).name if isinstance(image_path, (str, Path)) else "vis_output.png"
                 output_path = output_dir / f"vis_{fname}"
-                draw_overlay(proc_bgr, final_results, str(output_path)) # May change proc_bgr to orig_bgr if you want original image with annotations
+                
+                image_to_draw_on = proc_bgr if calibration_active else orig_bgr
+                draw_overlay(image_to_draw_on, final_results, str(output_path))
                 print(f"Visualization saved to: {output_path}")
 
             return final_results
