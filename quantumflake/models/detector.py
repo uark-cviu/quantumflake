@@ -1,10 +1,8 @@
-# quantumflake/models/detector.py
-
 from ultralytics import YOLO
 
 def load_detector(weights_path: str, device: str):
     """
-    Loads the YOLOv8 object detection model.
+    Loads the YOLOv11 object detection model.
 
     Args:
         weights_path (str): Path to the .pt model weights file.

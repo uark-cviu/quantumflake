@@ -1,10 +1,8 @@
-# quantumflake/models/classifier.py
-
 import torch
 import torch.nn as nn
 from transformers import ResNetModel
 
-CLASS_NAMES = ['1-layer', '2-layer', '3-layer', '4-layer']
+CLASS_NAMES = ['1-layer', '5-layer']
 
 #Example
 MATERIAL_MAP = {
@@ -16,12 +14,7 @@ MATERIAL_MAP = {
 
 
 class FlakeLayerClassifier(nn.Module):
-    """
-    The classifier architecture exactly as defined in the training script.
-    Note: The training script only ever used the image-only forward pass,
-    so the material embedding part is unused during inference.
-    """
-    def __init__(self, num_materials, material_dim, num_classes=4, dropout_prob=0.1, freeze_cnn=False):
+    def __init__(self, num_materials, material_dim, num_classes=2, dropout_prob=0.1, freeze_cnn=False):
         super().__init__()
         
         self.cnn = ResNetModel.from_pretrained("microsoft/resnet-18")
@@ -49,9 +42,6 @@ class FlakeLayerClassifier(nn.Module):
         )
 
     def forward(self, pixel_values, material=None):
-        """
-        Forward pass. The training script always called this with material=None.
-        """
         outputs = self.cnn(pixel_values=pixel_values)
         img_feats = outputs.pooler_output
         img_feats = img_feats.view(img_feats.size(0), -1)

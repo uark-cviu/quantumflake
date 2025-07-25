@@ -1,0 +1,13 @@
+# Path to training images directory
+train: /path/to/your/my_detector_dataset/images/train
+
+# Path to validation images directory
+val: /path/to/your/my_detector_dataset/images/val
+
+# You can add test if needed
+# test: /path/to/your/my_detector_dataset/images/test
+
+# Class Definition
+# Number of classes
+nc: 1
+names: ['flake']

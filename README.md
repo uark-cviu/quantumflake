@@ -3,9 +3,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 
-**QuantumFlake** is a streamlined framework for the automated detection and layer classification of 2D quantum materials (flakes) in microscopy images. It provides a complete, easy-to-use pipeline from raw image to structured analysis, leveraging a YOLOv11 model for flake detection and a custom ResNet-based model for layer classification.
+**QuantumFlake** is a streamlined framework for the automated detection and layer classification of 2D materials (flakes) in microscopy images. It provides a complete, easy-to-use pipeline from raw image to structured analysis, leveraging a YOLOv8 model for flake detection and a custom ResNet-based model for layer classification.
 
-The framework is designed for accessibility and extensibility, allowing researchers to rapidly analyze microscopy images and integrate custom models with minimal setup.
+The framework is designed for accessibility and extensibility, allowing researchers to rapidly analyze images, train custom models on their own data, and integrate the tools into larger workflows.
 
 You can test out the framework with your own images here: https://huggingface.co/spaces/sanpdy/quantum-flake-pipeline
 
@@ -13,18 +13,19 @@ You can test out the framework with your own images here: https://huggingface.co
 
 ## Key Features
 
-- **One-Liner Inference:** Detect and classify all flakes in an image or directory using a single, simple command.
-- **Powerful & Flexible CLI:** A robust command-line interface allows for easy control over all inference parameters.
-- **Configuration-Driven:** Control everything, from model weights to confidence thresholds, via YAML files for reproducible and organized experiments.
-- **Material-Aware Architecture:** The classifier is designed to incorporate material-specific information (though currently trained for image-only use), making it future-proof for more advanced models.
-- **Placeholder Stubs:** The framework includes placeholder files and a clear structure for future expansion into training, model exporting, and quantization.
+- **One-Liner Inference & Training:** Run complex analysis or train new models from your terminal with single, simple commands.
+- **Flexible & Data-Driven:** The pipeline automatically adapts to models with different architectures and class types.
+- **Configuration-Driven:** Control everything—from model weights to hyperparameters—via YAML files for reproducible experiments.
+- **Advanced Inference Options:** Includes patch-based inference for high-resolution images and color calibration for consistent results across different microscopes.
+- **Extensible by Design:** The modular structure makes it easy to swap out models or add new functionality.
 
 ## Installation
 
 1.  **Clone the Repository:**
 
     ```bash
-    git clone https://github.com/sanpdy/quantumflake
+    git clone [https://github.com/sanpdy/quantumflake](https://github.com/sanpdy/quantumflake)
+    cd quantumflake
     ```
 
 2.  **Install Dependencies:**
@@ -34,109 +35,147 @@ You can test out the framework with your own images here: https://huggingface.co
     pip install -r requirements.txt
     ```
 
-3.  **Place Pre-trained Weights:**
-    Create a `weights` directory in the project root and place the pre-trained model files inside it.
-
+3.  **Download Pre-trained Weights:**
+    Create a `weights` directory and place the pre-trained model files inside.
     ```bash
     mkdir weights
     ```
-
-    Your directory should look like this:
-
-    ```
-    quantumflake/
-    weights/
-    ├── yolo-flake-detector.pt
-    └── flake-classifier.pth
-    ...
-    ```
-
-    You can download the pre-trained weights (trained on Masubuchi et al.'s GMMDetector dataset) from Hugging Face:
-
-- **Detector weights** (`yolo-flake-detector-GMM.pt`):  
-  https://huggingface.co/sanpdy/yolo-flake-detector
-
-- **Classifier weights** (`flake-classifier.pth`):  
-  https://huggingface.co/sanpdy/flake-classifier
+    You can download the official weights (trained on Masubuchi et al.'s GMMDetector dataset) from Hugging Face:
+    - **Detector:** [yolo-flake-detector-GMM.pt](https://huggingface.co/sanpdy/yolo-flake-detector)
+    - **Classifier:** [flake-classifier.pth](https://huggingface.co/sanpdy/flake-classifier)
 
 ## Quickstart: Running Inference
 
-Once installed, you can immediately start analyzing images.
-
-### Using the Command-Line Interface (CLI)
-
-The CLI is the primary way to interact with the framework.
+The primary way to interact with the framework is via the Command-Line Interface (CLI).
 
 **1. Basic Prediction:**
-Run detection and classification on a single image using the default settings.
+Run detection and classification on a directory of images.
 
 ```bash
-python -m quantumflake.cli predict "path/to/your/image.png"
+python -m quantumflake.cli predict "path/to/your/images/"
 ```
 
 **2. Overriding Configuration:**
-Use the `--opts` flag to change any setting from the default configuration file on the fly. For example, to run on the CPU and save a visualization:
+Use the `--opts` flag to change any setting on the fly. For example, to run on an Apple Silicon GPU and save visualizations:
 
 ```bash
 python -m quantumflake.cli predict "data/your_image.jpg" --opts device=cpu save_vis=True
 ```
 
-A new annotated image will be saved to `runs/predict/vis_your_image.jpg`.
-
 **3. Using a Custom Config File:**
-For more complex experiments, you can specify your own YAML config file.
+For full control, specify your own YAML config file.
 
 ```bash
-python -m quantumflake.cli predict "data/your_image.jpg" -c "quantumflake/cfg/my_gpu.yaml"
+python -m quantumflake.cli predict "data/your_image.jpg" -c "path/to/your/config.yaml"
 ```
 
-### Programmatic Usage (in Python)
+---
 
-You can easily integrate the pipeline into your own scripts.
+## Training New Models
 
-```python
-# example_script.py
-from quantumflake import FlakePipeline
-from quantumflake.utils.io import load_config
-import pprint
+QuantumFlake provides built-in, CLI-driven training workflows for both the detector and the classifier.
 
-# 1. Load the configuration
-config = load_config("quantumflake/cfg/default.yaml")
+### Training a New Detector
 
-# 2. Override settings if needed
-config['device'] = 'cpu'
-config['save_vis'] = True
+The detector uses the standard **YOLO format**.
 
-# 3. Initialize and run the pipeline
-pipeline = FlakePipeline(config)
-results = pipeline("path/to/your/image.png")
+**1. Prepare Your Dataset:**
 
-# 4. Print the results
-pprint.pprint(results)
-```
+- Create a dataset directory with `images` and `labels` subfolders, split into `train` and `val`.
+- For each image, create a `.txt` label file. Each line should be `0 <x_center> <y_center> <width> <height>` for the "flake" class.
 
-## Configuration
-
-The framework's behavior is controlled by YAML files located in `quantumflake/cfg/`.
-
-- **`default.yaml`**: This file contains all the default parameters for the models and pipeline.
-- **Custom Configs**: You can create new `.yaml` files (e.g., `my_gpu_experiment.yaml`) to define different experimental setups. The CLI will intelligently load your custom config on top of the default.
-
-**Example `default.yaml` snippet:**
+**2. Create a Dataset YAML:**
+Create a `your_dataset.yaml` file that points to your data.
 
 ```yaml
-device: "auto"
-save_vis: false
+train: /path/to/your/detector_dataset/images/train
+val: /path/to/your/detector_dataset/images/val
+nc: 1
+names: ["flake"]
+```
+
+**3. Run the Training Command:**
+
+```bash
+python -m quantumflake.cli train detector \
+    --data "path/to/your/your_dataset.yaml" \
+    --epochs 100 \
+    --device 0  # Use GPU 0
+```
+
+The best model will be saved to `runs/detect/your_dataset/weights/best.pt`.
+
+### Training a New Classifier
+
+The classifier uses the standard **ImageFolder format**.
+
+**1. Prepare Your Dataset:**
+
+- Create a dataset directory. Inside, create one subdirectory for each class you want to train. The folder name becomes the class label.
+- Place your cropped flake images into the corresponding class folders.
+
+```
+my_classifier_dataset/
+├── monolayer/
+│   ├── flake_01.png
+│   └── ...
+└── bilayer/
+    └── ...
+```
+
+**2. Run the Training Command:**
+The trainer will automatically discover the classes from your folder names.
+
+```bash
+python -m quantumflake.cli train classifier \
+    --data "path/to/my_classifier_dataset" \
+    --epochs 25 \
+    --device cpu \
+    --save-dir "runs/my_new_classifier" \
+    --num-materials 2 \
+    --material-dim 16
+```
+
+The best model will be saved to `runs/my_new_classifier/best_classifier.pth`. The pipeline will automatically read the class names and architecture from this file during inference.
+
+---
+
+## Advanced Configuration
+
+Control the pipeline's behavior via a YAML configuration file.
+
+**Example `config.yaml`:**
+
+```yaml
+# Hardware and output settings
+device: "cpu"
+output_dir: "monolayer_classifier_v2/"
+save_vis: true
+
+# --- Advanced Features ---
+
+# Enable color calibration by providing a reference image path
+calibration_ref_path: "/path/to/your/calibration_ref.png"
+
+# Explicitly disable calibration (it's on by default if a path is provided)
+use_calibration: false
+
+# Enable patch-based inference for high-res images
+patching:
+  use_patching: true
+  patch_size: 640
 
 models:
   detector:
-    weights: "weights/yolo-flake-detector.pt"
-    conf_thresh: 0.25
-    iou_thresh: 0.45
+    weights: "weights/uark_detector_v3.pt"
+    conf_thresh: 0.2
+    iou_thresh: 0.05
 
   classifier:
-    weights: "weights/flake-classifier.pth"
-    num_materials: 4
+    weights: "weights/flake_monolayer_classifier.pth"
+    # For our current/older models, you MUST specify the architecture details
+    class_names: ["1-layer", "5plus-layer"]
+    num_materials: 2
     material_dim: 64
 ```
 
@@ -145,29 +184,21 @@ models:
 ```
 quantumflake/
 │
-├─ quantumflake/          # The core library package
+├─ quantumflake/
 │  ├─ __init__.py
-│  ├─ pipeline.py         # Main FlakePipeline class
-│  ├─ cli.py              # Command-line interface logic
-│  ├─ models/             # Model definitions
-│  ├─ utils/              # Helper functions (IO, visualization)
-│  └─ cfg/                # Default YAML configuration files
+│  ├─ pipeline.py
+│  ├─ cli.py
+│  ├─ models/
+│  ├─ trainers/
+│  │  ├─ detect.py
+│  │  └─ classify.py
+│  ├─ utils/
+│  └─ cfg/
 │
-├─ weights/               # Default directory for model weights
-├─ scripts/               # (Future) Standalone scripts for export, etc.
-├─ tests/                 # (Future) Automated tests
+├─ weights/
 ├─ requirements.txt
-└─ README.md              # This file
+└─ README.md
 ```
-
-## Roadmap (Future Work)
-
-The core inference pipeline is stable. Future development will focus on:
-
-- **Training Scripts:** Implementing flexible training loops for both the detector and classifier.
-- **Dataset Tools:** Adding utilities for converting annotations (e.g., from COCO) and splitting datasets.
-- **Model Export & Quantization:** Providing scripts to export models to ONNX and apply quantization for faster CPU inference.
-- **Automated Testing:** Building a full test suite with `pytest`.
 
 ## Contributing
 

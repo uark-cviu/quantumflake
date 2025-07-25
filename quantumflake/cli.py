@@ -1,84 +1,121 @@
-# quantumflake/cli.py
-
-import argparse
-import glob
+import torch
+from torchvision import transforms
+from PIL import Image
 from pathlib import Path
-import os
+from tqdm import tqdm
+import numpy as np
+import cv2
+import json
+from .models.detector import load_detector
+from .models.classifier import FlakeLayerClassifier
+from .utils.data import crop_flakes, load_image
+from .utils.vis import draw_overlay
+from .utils.io import resolve_path
 
-from .pipeline import FlakePipeline
-from .utils.io import load_config, merge_configs
+class FlakePipeline:
+    def __init__(self, config: dict):
+        self.cfg = config
+        self.device = torch.device(self.cfg['device'])
+        print(f"Initializing pipeline on device: {self.device}")
 
-# The path to the internal default config
-DEFAULT_CONFIG_PATH = Path(__file__).parent / 'cfg' / 'default.yaml'
+        self.preprocess = transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ])
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="QuantumFlake: A framework for 2D Material Detection and Classification.",
-        formatter_class=argparse.RawTextHelpFormatter
-    )
-    subparsers = parser.add_subparsers(dest="command", required=True)
+        det_weights = resolve_path(self.cfg['models']['detector']['weights'])
+        self.detector = load_detector(det_weights, self.device)
 
-    # --- Predict Command ---
-    p_predict = subparsers.add_parser("predict", help="Run inference on images.")
-    p_predict.add_argument(
-        "source",
-        help="Path to an image, directory, or glob pattern (e.g., 'data/*.png')."
-    )
-    p_predict.add_argument(
-        "-c", "--config",
-        default=str(DEFAULT_CONFIG_PATH),
-        help="Path to a custom YAML config file. Defaults to the internal default."
-    )
-    p_predict.add_argument(
-        "--opts",
-        nargs='*',
-        help="Override config options, e.g., device=cuda:0 save_vis=True"
-    )
-
-    # --- Placeholder for Train Command ---
-    p_train = subparsers.add_parser("train", help="Train a model (detector or classifier).")
-    p_train.add_argument("model", choices=['detector', 'classifier'], help="Which model to train.")
-    # ... add other training args ...
-
-    args = parser.parse_args()
-
-    if args.command == "predict":
-        config = load_config(args.config)
-        if args.opts:
-            config = merge_configs(config, args.opts)
-
-        source_path = Path(args.source)
-        image_paths = []
-        if source_path.is_dir():
-            print(f"Source is a directory. Searching for images in {source_path}...")
-            supported_exts = ['*.jpg', '*.jpeg', '*.png', '*.bmp', '*.tif', '*.tiff']
-            for ext in supported_exts:
-                pattern = os.path.join(args.source, '**', ext)
-                image_paths.extend(glob.glob(pattern, recursive=True))
-        else:
-            image_paths = glob.glob(args.source, recursive=True)
-
-        if not image_paths:
-            print(f"Error: No images found at '{args.source}'")
-            return
+        cls_weights_path = resolve_path(self.cfg['models']['classifier']['weights'])
+        cls_params = self.cfg['models']['classifier']
         
-        print(f"Found {len(image_paths)} image(s) to process.")
+        checkpoint = torch.load(cls_weights_path, map_location=self.device)
+        self.class_names = checkpoint.get('class_names')
+        num_classes = checkpoint.get('num_classes')
+        num_materials = checkpoint.get('num_materials')
+        material_dim = checkpoint.get('material_dim')
 
-        pipeline = FlakePipeline(config)
-        results = pipeline(image_paths)
+        if self.class_names is None or num_classes is None:
+            print("WARNING: 'class_names' or 'num_classes' not found in checkpoint. Using values from config file.")
+            self.class_names = cls_params['class_names']
+            num_classes = len(self.class_names)
+        
+        if num_materials is None or material_dim is None:
+            print("WARNING: 'num_materials' or 'material_dim' not found in checkpoint. Using values from config file.")
+            num_materials = cls_params['num_materials']
+            material_dim = cls_params['material_dim']
+        
+        print(f"Loading classifier with {num_classes} classes: {self.class_names}")
+        print(f"Model architecture: num_materials={num_materials}, material_dim={material_dim}")
 
-        print("\n--- Prediction Complete ---")
-        for img_path, result_list in zip(image_paths, results):
-            print(f"\n[+] Image: {Path(img_path).name}")
-            if result_list:
-                for i, flake in enumerate(result_list):
-                    print(f"  - Flake {i+1}: Class={flake['cls']} (Confidence: {flake['cls_conf']})")
-            else:
-                print("  No flakes found.")
-        print("---------------------------\n")
+        self.classifier = FlakeLayerClassifier(
+            num_materials=num_materials,
+            material_dim=material_dim,
+            num_classes=num_classes,
+        )
+        
+        if 'model_state_dict' in checkpoint:
+            self.classifier.load_state_dict(checkpoint['model_state_dict'])
+        else:
+            print("WARNING: 'model_state_dict' key not found. Assuming checkpoint is the state dict itself.")
+            self.classifier.load_state_dict(checkpoint)
 
-    elif args.command == "train":
-        print(f"Training for '{args.model}' is not yet implemented.")
+        self.classifier.to(self.device)
+        self.classifier.eval()
 
-if __name__ == "__main__":
-    main()
+        print("Pipeline initialized successfully.")
+
+    def __call__(self, image_source, save_vis=None):
+        should_save_vis = save_vis if save_vis is not None else self.cfg.get('save_vis', False)
+        if isinstance(image_source, (list, tuple)):
+            return [self._process_single(src, should_save_vis) for src in tqdm(image_source, desc="Processing Images")]
+        else:
+            return self._process_single(image_source, should_save_vis)
+
+    def _process_single(self, image_path, save_vis):
+        try:
+            det_params = self.cfg['models']['detector']
+            det_results = self.detector.predict(
+                source=image_path, conf=det_params['conf_thresh'], iou=det_params['iou_thresh'], verbose=False
+            )[0]
+
+            orig_bgr = det_results.orig_img.copy()
+            boxes = det_results.boxes
+            if not len(boxes): return []
+
+            crops_pil = crop_flakes(orig_bgr, boxes.xyxy)
+            if not crops_pil: return []
+
+            processed_crops = torch.stack([self.preprocess(c) for c in crops_pil]).to(self.device)
+
+            with torch.no_grad():
+                logits = self.classifier(processed_crops)
+                probabilities = torch.nn.functional.softmax(logits, dim=1)
+                cls_confs, cls_indices = torch.max(probabilities, 1)
+
+            final_results = self._package_results(boxes, cls_indices.cpu(), cls_confs.cpu())
+
+            if save_vis:
+                output_dir = resolve_path(self.cfg.get('output_dir', 'runs/predict'))
+                output_dir.mkdir(parents=True, exist_ok=True)
+                fname = Path(image_path).name if isinstance(image_path, (str, Path)) else "vis_output.png"
+                output_path = output_dir / f"vis_{fname}"
+                draw_overlay(orig_bgr, final_results, str(output_path))
+                print(f"Visualization saved to: {output_path}")
+
+            return final_results
+        except Exception as e:
+            print(f"An error occurred during processing: {e}")
+            raise
+
+    def _package_results(self, det_boxes, cls_indices, cls_confs):
+        results = []
+        for i in range(len(det_boxes)):
+            results.append({
+                "bbox": [round(c) for c in det_boxes.xyxy[i].cpu().numpy().tolist()],
+                "det_conf": round(float(det_boxes.conf[i].cpu().item()), 4),
+                "cls": self.class_names[cls_indices[i]],
+                "cls_conf": round(float(cls_confs[i].item()), 4),
+            })
+        return results
