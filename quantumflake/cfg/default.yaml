@@ -1,9 +1,11 @@
 device: "cpu"
-output_dir: "monolayer_classifier_calibration/"
+output_dir: "data/high_res_results/"
 save_vis: false
+use_calibration: false
 default_material_id: 0
 
-calibration_ref_path: "/Users/sanpandey/flake_pipeline/calibration_ref.jpg"
+if use_calibration:
+  calibration_ref_path: "calibration_ref.jpg"
 
 patching:
   use_patching: false

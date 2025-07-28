@@ -77,7 +77,7 @@ class FlakePipeline:
         try:
             orig_bgr = load_image(image_path)
             proc_bgr = orig_bgr
-            use_calibration = self.cfg.get('use_calibration', True)
+            use_calibration = self.cfg.get('use_calibration', False)
             if self.color_ref_bgr is not None and use_calibration:
                 print("Applying color calibration before processing...")
                 proc_bgr = self.calibration(self.color_ref_bgr, orig_bgr)
@@ -105,7 +105,7 @@ class FlakePipeline:
                 output_dir.mkdir(parents=True, exist_ok=True)
                 fname = Path(image_path).name if isinstance(image_path, (str, Path)) else "vis_output.png"
                 output_path = output_dir / f"vis_{fname}"
-                draw_overlay(proc_bgr, final_results, str(output_path)) # May change proc_bgr to orig_bgr if you want original image with annotations
+                draw_overlay(orig_bgr, final_results, str(output_path))
                 print(f"Visualization saved to: {output_path}")
 
             return final_results

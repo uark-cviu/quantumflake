@@ -1,5 +1,3 @@
-# quantumflake/utils/data.py
-
 import cv2
 from PIL import Image
 import numpy as np
@@ -9,7 +7,7 @@ def load_image(image_path):
     img = cv2.imread(str(image_path))
     if img is None:
         raise FileNotFoundError(f"Image not found at {image_path}")
-    return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    return img
 
 def crop_flakes(image_bgr: np.ndarray, bboxes_xyxy: list) -> list:
     """
