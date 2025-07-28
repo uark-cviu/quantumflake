@@ -3,7 +3,7 @@ from PIL import Image
 import numpy as np
 
 def load_image(image_path):
-    """Loads an image using OpenCV and converts to RGB."""
+    """Loads an image using OpenCV and converts to BGR."""
     img = cv2.imread(str(image_path))
     if img is None:
         raise FileNotFoundError(f"Image not found at {image_path}")

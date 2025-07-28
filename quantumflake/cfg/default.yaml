@@ -1,7 +1,7 @@
 device: "cpu"
-output_dir: "data/high_res_results/"
+output_dir: "data/high_res_results_calibration/"
 save_vis: false
-use_calibration: false
+use_calibration: true
 default_material_id: 0
 
 if use_calibration:

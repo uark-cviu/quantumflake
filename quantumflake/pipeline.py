@@ -55,7 +55,7 @@ class FlakePipeline:
             num_classes=num_classes,
         )
         
-        checkpoint = torch.load(cls_weights_path, map_location=self.device)
+        checkpoint = torch.load(cls_weights_path, map_location=self.device, weights_only=False)
         if 'model_state_dict' in checkpoint:
             self.classifier.load_state_dict(checkpoint['model_state_dict'])
         else:
