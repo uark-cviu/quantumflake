@@ -200,6 +200,42 @@ quantumflake/
 └─ README.md
 ```
 
-## Contributing
+<h2 align="center">Contributors</h2>
 
-If you have suggestions, please open an issue to discuss it, or feel free to email me. Thanks!
+<div align="center">
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Affiliation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Xuan-Bac Nguyen</td>
+      <td>University of Arkansas</td>
+    </tr>
+    <tr>
+      <td>Sankalp Pandey</td>
+      <td>University of Arkansas</td>
+    </tr>
+    <tr>
+        <td>Tim Faltermeier</td>
+        <td>Montana State University</td>
+    </tr>
+    <tr>
+      <td>Dr. Hugh Churchill</td>
+      <td>University of Arkansas</td>
+    </tr>
+    <tr>
+      <td>Dr. Nicholas Borys</td>
+      <td>Montana State University</td>
+    </tr>
+    <tr>
+      <td>Dr. Khoa Luu</td>
+      <td>University of Arkansas</td>
+    </tr>
+  </tbody>
+</table>
+</div>

@@ -1,15 +1,15 @@
 device: "cpu"
-output_dir: "data/high_res_results_calibration/"
-save_vis: false
-use_calibration: true
+output_dir: "runs/predict/"
+save_vis: true
+use_calibration: false
+use_patching: true
+patch_size: 640
 default_material_id: 0
+
 
 if use_calibration:
   calibration_ref_path: "calibration_ref.jpg"
 
-patching:
-  use_patching: false
-  patch_size: 640
 
 models:
   spectrum_inv:

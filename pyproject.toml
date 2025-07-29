@@ -4,16 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quantumflake"
-version = "0.1.2"
+version = "0.1.0"
 authors = [
-  { name="Sankalp Pandey", email="sankalpp@uark.edu" },
+  { name="Sankalp Pandey", email="sankalpp@uark.edu" }
 ]
 description = "A framework for 2D material flake detection and classification."
 readme = "README.md"
 requires-python = ">=3.8"
+license = { file = "LICENSE" }
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Image Recognition",
@@ -38,3 +38,8 @@ dependencies = [
 
 [project.scripts]
 quantumflake = "quantumflake.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["quantumflake*"]
+exclude = ["tests*", "data*", "runs*"]
