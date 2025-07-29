@@ -30,6 +30,7 @@ dependencies = [
     "seaborn",
     "transformers",
     "accelerate",
+    "scikit-learn",
 ]
 
 [project.urls]
