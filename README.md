@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 
-**QuantumFlake** is a streamlined framework for the automated detection and layer classification of 2D materials (flakes) in microscopy images. It provides a complete, easy-to-use pipeline from raw image to structured analysis, leveraging a YOLOv8 model for flake detection and a custom ResNet-based model for layer classification.
+**QuantumFlake** is a framework for the automated detection and layer classification of 2D materials (flakes) in microscopy images. It provides a complete, easy-to-use pipeline from raw image to structured analysis, leveraging a YOLOv8 model for flake detection and a custom ResNet-based model for layer classification.
 
 The framework is designed for accessibility and extensibility, allowing researchers to rapidly analyze images, train custom models on their own data, and integrate the tools into larger workflows.
 
@@ -40,7 +40,7 @@ You can test out the framework with your own images here: https://huggingface.co
     ```bash
     mkdir weights
     ```
-    You can download the official weights (trained on Masubuchi et al.'s GMMDetector dataset) from Hugging Face:
+    You can download the official weights from Hugging Face:
     - **Detector:** [yolo-flake-detector-GMM.pt](https://huggingface.co/sanpdy/yolo-flake-detector)
     - **Classifier:** [flake-classifier.pth](https://huggingface.co/sanpdy/flake-classifier)
 
@@ -157,7 +157,7 @@ save_vis: true
 # Enable color calibration by providing a reference image path
 calibration_ref_path: "/path/to/your/calibration_ref.png"
 
-# Explicitly disable calibration (it's on by default if a path is provided)
+# Explicitly enable/disable calibration (it's on by default if a path is provided)
 use_calibration: false
 
 # Enable patch-based inference for high-res images
