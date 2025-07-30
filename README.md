@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 
-**QuantumFlake** is a framework for the automated detection and layer classification of 2D materials (flakes) in microscopy images. It provides a complete, easy-to-use pipeline from raw image to structured analysis, leveraging a YOLOv8 model for flake detection and a custom ResNet-based model for layer classification.
+**QuantumFlake** is a framework for the automated detection and layer classification of 2D materials (flakes) in microscopy images. It provides a complete, easy-to-use pipeline from raw image to structured analysis, leveraging a YOLO model for flake detection and a custom ResNet-based model for layer classification.
 
 The framework is designed for accessibility and extensibility, allowing researchers to rapidly analyze images, train custom models on their own data, and integrate the tools into larger workflows.
 
