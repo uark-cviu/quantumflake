@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quantumflake"
-version = "0.2.2"
+version = "0.2.4"
 authors = [
   { name="Sankalp Pandey", email="sankalpp@uark.edu" }
 ]
@@ -44,3 +44,6 @@ quantumflake = "quantumflake.cli:main"
 where = ["."]
 include = ["quantumflake*"]
 exclude = ["tests*", "data*", "runs*"]
+
+[tool.setuptools.package-data]
+quantumflake = ["**/*.yaml"]
