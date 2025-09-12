@@ -2,14 +2,9 @@ import yaml
 from pathlib import Path
 
 def get_project_root() -> Path:
-    """Returns the project root folder."""
     return Path(__file__).parent.parent.parent
 
 def resolve_path(path_str: str) -> Path:
-    """
-    Resolves a path string. If it's absolute, return it.
-    If it's relative, resolve it from the project root.
-    """
     path = Path(path_str)
     if path.is_absolute():
         return path
@@ -35,7 +30,7 @@ def merge_configs(base, overrides):
                     value = float(value)
                 except ValueError:
                     pass
-        
+
         keys = key.split('.')
         d = base
         for k in keys[:-1]:
