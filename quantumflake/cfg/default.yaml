@@ -1,28 +1,46 @@
-device: "cpu"
-output_dir: "runs/predict/"
+device: "cuda:0"
+output_dir: "runs/predict"
 save_vis: true
+
+# Optional color calibration (off by default)
 use_calibration: false
-use_patching: true
-patch_size: 640
-default_material_id: 0
+calibration_ref_path: "calibration_ref.jpg"
 
-
-if use_calibration:
-  calibration_ref_path: "calibration_ref.jpg"
-
+patching:
+  use_patching: false
+  patch_size: 640
 
 models:
-  spectrum_inv:
-    weights: "weights/last_spectrum_inv.pth"
-
   detector:
-    weights: "weights/uark_detector_v3.pt"
-    conf_thresh: 0.2
+    type: yolo
+    conf_thresh: 0.20
     iou_thresh: 0.05
+
+    yolo:
+      weights: "weights/uark_detector_v3.pt"
+
+    detr:
+      architecture: "facebook/detr-resnet-50"
+      weights: ""                               # "" => load from hub; OR path to a HF 'save_pretrained' folder
+      num_labels: 1                              # number of foreground classes (flakes = 1)
+
+    vitdet:
+      architecture: "model_zoo:COCO-Detection/retinanet_ViTDet_B_100ep.yaml"
+      weights: "" # provide a .pth
+
+    openvino_yolo:
+      # OpenVINO IR (model.xml or directory containing .xml/.bin)
+      weights: "weights/uark_detector_v3_openvino/model.xml"
+
+    maskterial:
+      #  - "maskterial://<relative>.py" to resolve inside installed MaskTerial package
+      architecture: "maskterial://<pick_a_config>.py"
+      weights: ""         # local ckpt (from Zenodo)
+      mask_thresh: 0.5    # binarize pred_masks when deriving boxes
+
 
   classifier:
     weights: "weights/flake_monolayer_classifier.pth"
-    class_names: ['1-layer', '5plus-layer']
+    class_names: ["1-layer", "5plus-layer"]
     num_materials: 2
     material_dim: 64
-    freeze_cnn: false
