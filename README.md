@@ -1,182 +1,153 @@
-# QuantumFlake: A Framework for 2D Material Detection and Classification
+<div align="center">
+  <img src="resources/quantum_flake_logo.png" width="200"/>
+  <div>&nbsp;</div>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Python](https://img.shields.io/badge/Python-3.12%2B-blue)
+[![open issues](https://img.shields.io/github/issues/uark-cviu/quantumflake.svg)](https://github.com/uark-cviu/quantumflake/issues)
 
-**QuantumFlake** is a framework for the automated detection and layer classification of 2D materials (flakes) in microscopy images. It provides a complete, easy-to-use pipeline from raw image to structured analysis, leveraging a YOLO model for flake detection and a custom ResNet-based model for layer classification.
+[Installation](docs/get_started.md) |
+[Model Zoo](docs/model_zoo.md) |
+[Reporting Issues](https://github.com/uark-cviu/quantumflake/issues/new/choose)
 
-The framework is designed for accessibility and extensibility, allowing researchers to rapidly analyze images, train custom models on their own data, and integrate the tools into larger workflows.
+</div>
 
-You can test out the framework with your own images here: https://huggingface.co/spaces/sanpdy/quantum-flake-pipeline
+<div align="center">
 
----
+</div>
 
-## Key Features
+## Introduction
 
-- **One-Liner Inference & Training:** Run complex analysis or train new models from your terminal with single, simple commands.
-- **Flexible & Data-Driven:** The pipeline automatically adapts to models with different architectures and class types.
-- **Configuration-Driven:** Control everything—from model weights to hyperparameters—via YAML files for reproducible experiments.
-- **Advanced Inference Options:** Includes patch-based inference for high-resolution images and color calibration for consistent results across different microscopes.
-- **Extensible by Design:** The modular structure makes it easy to swap out models or add new functionality.
+**QuantumFlake** is a modular framework for automated **detection** and **layer classification** of 2D-material flakes in microscope images. It provides a one-command pipeline covering the end-to-end workflow:
+
+<h3 align="center">detect → crop → classify → visualize</h3>
+
+The main branch works with **PyTorch 2.5+** and **Python 3.12+**.
+
+<details open>
+<summary>Major features</summary>
+
+- **Multi-backend detection** — Plug-and-play support for YOLO, DETR, ViTDet, OpenVINO-YOLO (CPU), and MaskTerial (Mask2Former).
+- **Detailed Reports** — Unified JSON sidecars and visualization overlays across detectors.
+- **Layer Classification** — Lightweight ResNet-based layer classifier (e.g., _1-layer_, _5plus-layer_).
+- **Extras** — Optional color calibration, patch-based inference for large images, progress bars, and reproducible configs.
+</details>
 
 ## Installation
 
-1.  **Clone the Repository:**
+Please refer to **[Installation](docs/get_started.md)** for setup instructions (CUDA/CPU options, pinned deps).
 
-    ```bash
-    git clone [https://github.com/sanpdy/quantumflake](https://github.com/sanpdy/quantumflake)
-    cd quantumflake
-    ```
+## Overview of Model Zoo
 
-2.  **Install Dependencies:**
-    It is highly recommended to use a virtual environment (e.g., conda, venv).
+<div align="center">
+  <b>Architectures</b>
+</div>
+<table align="center">
+  <tbody>
+    <tr align="center" valign="bottom">
+      <td><b>Object Detection</b></td>
+      <td><b>Classification</b></td>
+      <td><b>Utilities</b></td>
+    </tr>
+    <tr valign="top">
+      <td>
+        <ul>
+          <li><a href="docs/models/yolo.md">YOLO (Ultralytics)</a></li>
+          <li><a href="docs/models/detr.md">DETR (HF)</a></li>
+          <li><a href="docs/models/vitdet.md">ViTDet (Detectron2)</a></li>
+          <li><a href="docs/models/openvino_yolo.md">OpenVINO-YOLO (CPU)</a></li>
+          <li><a href="docs/models/maskterial.md">MaskTerial (Mask2Former)</a></li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li><a href="docs/models/classifier.md">ResNet Layer Classifier</a></li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li><a href="docs/guide/calibration.md">Color Calibration</a></li>
+          <li><a href="docs/guide/patching.md">Patch-based Inference</a></li>
+          <li><a href="docs/guide/config.md">Configuration System</a></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
-    ```bash
-    pip install -r requirements.txt
-    ```
+## Weights
 
-3.  **Download Pre-trained Weights:**
-    Create a `weights` directory and place the pre-trained model files inside.
-    ```bash
-    mkdir weights
-    ```
-    You can download the official weights from Hugging Face:
-    - **Detector:** [yolo-flake-detector-GMM.pt](https://huggingface.co/sanpdy/yolo-flake-detector)
-    - **Classifier:** [flake-classifier.pth](https://huggingface.co/sanpdy/flake-classifier)
+Organize weights in a `weights/` folder:
 
-## Quickstart: Running Inference
+- `weights/uark_detector_v3.pt` — YOLO detector
+- `weights/flake_monolayer_classifier.pth` — classifier
+- `weights/maskterial/{config.yaml, maskterial.pth}` — MaskTerial (optional)
 
-The primary way to interact with the framework is via the Command-Line Interface (CLI).
+## Pipeline
 
-**1. Basic Prediction:**
-Run detection and classification on a directory of images.
+1. Detect flakes with the selected backend
+2. Crop detections to flake chips
+3. Classify crops (e.g., 1-layer, 5+ layers)
+4. Save visualizations and JSON sidecars
 
-```bash
-python -m quantumflake.cli predict "path/to/your/images/"
+Example JSON record:
+
+```
+{
+  "bbox": [x1, y1, x2, y2],
+  "det_conf": 0.8731,
+  "cls": "1-layer",
+  "cls_conf": 0.9123
+}
 ```
 
-**2. Overriding Configuration:**
-Use the `--opts` flag to change any setting on the fly. For example, to run on an Apple Silicon GPU and save visualizations:
+Overlays are saved as `vis_<image>.png`, and per-image detections as `<image_stem>.json` inside `output_dir`.
 
-```bash
-python -m quantumflake.cli predict "data/your_image.jpg" --opts device=cpu save_vis=True
-```
+## Configuration
 
-**3. Using a Custom Config File:**
-For full control, specify your own YAML config file.
+See [docs/guide/config.md](docs/guide/config.md) for instructions with adjusting the configurations.
 
-```bash
-python -m quantumflake.cli predict "data/your_image.jpg" -c "path/to/your/config.yaml"
-```
+## Training (Overview)
 
----
+### Detector (YOLO)
 
-## Training New Models
-
-QuantumFlake provides built-in, CLI-driven training workflows for both the detector and the classifier.
-
-### Training a New Detector
-
-The detector uses the standard **YOLO format**.
-
-**1. Prepare Your Dataset:**
-
-- Create a dataset directory with `images` and `labels` subfolders, split into `train` and `val`.
-- For each image, create a `.txt` label file. Each line should be `0 <x_center> <y_center> <width> <height>` for the "flake" class.
-
-**2. Create a Dataset YAML:**
-Create a `your_dataset.yaml` file that points to your data.
+Dataset YAML:
 
 ```yaml
-train: /path/to/your/detector_dataset/images/train
-val: /path/to/your/detector_dataset/images/val
+train: /path/to/detector_dataset/images/train
+val: /path/to/detector_dataset/images/val
 nc: 1
 names: ["flake"]
 ```
 
-**3. Run the Training Command:**
+Train:
 
 ```bash
-python -m quantumflake.cli train detector \
-    --data "path/to/your/your_dataset.yaml" \
-    --epochs 100 \
-    --device 0  # Use GPU 0
+python -m quantumflake.cli train detector   --data /path/to/dataset.yaml   --epochs 100   --imgsz 640   --device 0
 ```
 
-The best model will be saved to `runs/detect/your_dataset/weights/best.pt`.
+> **DETR and YOLO** training details & tips live in their respective docs:
+>
+> - YOLO — `docs/models/yolo.md`
+> - DETR — `docs/models/detr.md`
 
-### Training a New Classifier
+### Classifier (ImageFolder)
 
-The classifier uses the standard **ImageFolder format**.
-
-**1. Prepare Your Dataset:**
-
-- Create a dataset directory. Inside, create one subdirectory for each class you want to train. The folder name becomes the class label.
-- Place your cropped flake images into the corresponding class folders.
+Folder structure:
 
 ```
-my_classifier_dataset/
-├── monolayer/
+my_dataset/
+├── 1-layer/
 │   ├── flake_01.png
 │   └── ...
-└── bilayer/
+└── 5plus-layer/
     └── ...
 ```
 
-**2. Run the Training Command:**
-The trainer will automatically discover the classes from your folder names.
+Train:
 
 ```bash
-python -m quantumflake.cli train classifier \
-    --data "path/to/my_classifier_dataset" \
-    --epochs 25 \
-    --device cpu \
-    --save-dir "runs/my_new_classifier" \
-    --num-materials 2 \
-    --material-dim 16
-```
-
-The best model will be saved to `runs/my_new_classifier/best_classifier.pth`. The pipeline will automatically read the class names and architecture from this file during inference.
-
----
-
-## Advanced Configuration
-
-Control the pipeline's behavior via a YAML configuration file.
-
-**Example `config.yaml`:**
-
-```yaml
-# Hardware and output settings
-device: "cpu"
-output_dir: "monolayer_classifier_v2/"
-save_vis: true
-
-# --- Advanced Features ---
-
-# Enable color calibration by providing a reference image path
-calibration_ref_path: "/path/to/your/calibration_ref.png"
-
-# Explicitly enable/disable calibration (it's on by default if a path is provided)
-use_calibration: false
-
-# Enable patch-based inference for high-res images
-patching:
-  use_patching: true
-  patch_size: 640
-
-models:
-  detector:
-    weights: "weights/uark_detector_v3.pt"
-    conf_thresh: 0.2
-    iou_thresh: 0.05
-
-  classifier:
-    weights: "weights/flake_monolayer_classifier.pth"
-    # For our current/older models, you MUST specify the architecture details
-    class_names: ["1-layer", "5plus-layer"]
-    num_materials: 2
-    material_dim: 64
+python -m quantumflake.cli train classifier   --data my_dataset   --epochs 25   --device cuda:0   --save-dir runs/classify   --num-materials 2   --material-dim 64
 ```
 
 ## Project Structure
@@ -186,23 +157,33 @@ quantumflake/
 │
 ├─ quantumflake/
 │  ├─ __init__.py
-│  ├─ pipeline.py
 │  ├─ cli.py
+│  ├─ pipeline.py
+│  ├─ cfg/
+│  │   └─ default.yaml
 │  ├─ models/
+│  │   └─ detector.py
 │  ├─ trainers/
-│  │  ├─ detect.py
-│  │  └─ classify.py
-│  ├─ utils/
-│  └─ cfg/
+│  │   ├─ detect.py
+│  │   └─ classify.py
+│  └─ utils/
+│      ├─ io.py
+│      ├─ data.py
+│      ├─ vis.py
+│      ├─ vitdet_bootstrap.py
+│      ├─ maskterial_bootstrap.py
+│      └─ m2f_bootstrap.py
 │
 ├─ weights/
-├─ requirements.txt
+│   ├─ uark_detector_v3.pt
+│   ├─ flake_monolayer_classifier.pth
+│   └─ maskterial/
+│       ├─ config.yaml
+│       └─ maskterial.pth
 └─ README.md
 ```
 
-<h2 align="center">Contributors</h2>
-
-<div align="center">
+## Contributors
 
 <table>
   <thead>
@@ -212,30 +193,15 @@ quantumflake/
     </tr>
   </thead>
   <tbody>
-    <tr>
-      <td>Xuan-Bac Nguyen</td>
-      <td>University of Arkansas</td>
-    </tr>
-    <tr>
-      <td>Sankalp Pandey</td>
-      <td>University of Arkansas</td>
-    </tr>
-    <tr>
-        <td>Tim Faltermeier</td>
-        <td>Montana State University</td>
-    </tr>
-    <tr>
-      <td>Dr. Hugh Churchill</td>
-      <td>University of Arkansas</td>
-    </tr>
-    <tr>
-      <td>Dr. Nicholas Borys</td>
-      <td>Montana State University</td>
-    </tr>
-    <tr>
-      <td>Dr. Khoa Luu</td>
-      <td>University of Arkansas</td>
-    </tr>
+    <tr><td>Xuan-Bac Nguyen</td><td>University of Arkansas</td></tr>
+    <tr><td>Sankalp Pandey</td><td>University of Arkansas</td></tr>
+    <tr><td>Tim Faltermeier</td><td>Montana State University</td></tr>
+    <tr><td>Dr. Hugh Churchill</td><td>University of Arkansas</td></tr>
+    <tr><td>Dr. Nicholas Borys</td><td>Montana State University</td></tr>
+    <tr><td>Dr. Khoa Luu</td><td>University of Arkansas</td></tr>
   </tbody>
 </table>
-</div>
+
+## License
+
+This project is released under the [MIT License](LICENSE).
