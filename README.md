@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="resources/quantum_flake_logo.png" width="200"/>
+  <img src="resources/quantumflake_logo.png" width="200"/>
   <div>&nbsp;</div>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
