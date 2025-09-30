@@ -13,6 +13,12 @@ if use_calibration:
 
 models:
   use_phi_adapt: false
+
+  if use_phi_adapt:
+    n_wavelengths: 160
+    min_wavelength: 400
+    max_wavelength: 760
+
   spectrum_inv:
     weights: "weights/last_spectrum_inv.pth"
 
