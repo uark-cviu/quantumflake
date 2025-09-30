@@ -12,6 +12,7 @@ if use_calibration:
 
 
 models:
+  use_phi_adapt: false
   spectrum_inv:
     weights: "weights/last_spectrum_inv.pth"
 
