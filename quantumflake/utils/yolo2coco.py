@@ -1,4 +1,6 @@
-import os, json, glob
+import os
+import json
+import glob
 from pathlib import Path
 from PIL import Image
 
