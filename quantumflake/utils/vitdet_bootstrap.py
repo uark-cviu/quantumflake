@@ -1,4 +1,9 @@
-import os, sys, io, tarfile, tempfile, urllib.request
+import os
+import sys
+import io
+import tarfile
+import tempfile
+import urllib.request
 from pathlib import Path
 
 _DEFAULT_BRANCH = "main"
