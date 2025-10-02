@@ -177,7 +177,8 @@ def train_vitdet(
 
     cfg.SOLVER.IMS_PER_BATCH = ims_per_batch
     cfg.SOLVER.BASE_LR = base_lr
-    import json as _json, os as _os
+    import json as _json
+    import os as _os
     with open(train_json, "r") as f:
         n_imgs = len(_json.load(f)["images"])
     iters_per_epoch = max(1, n_imgs // ims_per_batch)
