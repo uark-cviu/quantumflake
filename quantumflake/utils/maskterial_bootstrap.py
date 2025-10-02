@@ -1,4 +1,8 @@
-import io, os, sys, tarfile, urllib.request
+import io
+import os
+import sys
+import tarfile
+import urllib.request
 from pathlib import Path
 from typing import Optional
 
