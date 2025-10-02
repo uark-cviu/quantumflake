@@ -1,87 +1,130 @@
-<div align="center">
-  <img src="resources/quantumflake.png" width="600"/>
-  <div>&nbsp;</div>
+
+# QuantumFlake: 2D Flake Detection & Layer Classification
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-![Python](https://img.shields.io/badge/Python-3.12%2B-blue)
-[![open issues](https://img.shields.io/github/issues/uark-cviu/quantumflake.svg)](https://github.com/uark-cviu/quantumflake/issues)
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
 
-[Installation](docs/get_started.md) |
-[Model Zoo](docs/model_zoo.md) |
-[Reporting Issues](https://github.com/uark-cviu/quantumflake/issues/new/choose)
-
-</div>
-
-<div align="center">
-
-</div>
-
-## Introduction
-
-**QuantumFlake** is a modular framework for automated **detection** and **layer classification** of 2D-material flakes in microscope images. It provides a one-command pipeline covering the end-to-end workflow:
+**QuantumFlake** is a modular framework for automated **detection** and **layer classification** of 2D-material flakes in microscope images. It provides a one-command pipeline:
 
 <h3 align="center">detect → crop → classify → visualize</h3>
 
-The main branch works with **PyTorch 2.5+** and **Python 3.12+**.
+Supported detectors:
+- **YOLO (Ultralytics)**
+- **DETR (HuggingFace Transformers)**
+- **ViTDet (Detectron2)**
+- **OpenVINO-YOLO (CPU)**
+- **MaskTerial (Detectron2 + Mask2Former)**
 
-<details open>
-<summary>Major features</summary>
 
-- **Multi-backend detection** — Plug-and-play support for YOLO, DETR, ViTDet, OpenVINO-YOLO (CPU), and MaskTerial (Mask2Former).
-- **Detailed Reports** — Unified JSON sidecars and visualization overlays across detectors.
-- **Layer Classification** — Lightweight ResNet-based layer classifier (e.g., _1-layer_, _5plus-layer_).
-- **Extras** — Optional color calibration, patch-based inference for large images, progress bars, and reproducible configs.
-</details>
+## Highlights
+- One-command inference on folders or glob patterns  
+- Standardized output across detectors  
+- ResNet-based classifier  
+- Optional color calibration, patch-based inference, JSON sidecars  
 
 ## Installation
+Example (CUDA 11.8):
 
-Please refer to **[Installation](docs/get_started.md)** for setup instructions (CUDA/CPU options, pinned deps).
+```bash
+conda create -n quantumflake python=3.12 -y
+conda activate quantumflake
 
-## Overview of Model Zoo
+# PyTorch (adjust CUDA version as needed)
+pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 \
+  --index-url https://download.pytorch.org/whl/cu118
 
-<div align="center">
-  <b>Architectures</b>
-</div>
-<table align="center">
-  <tbody>
-    <tr align="center" valign="bottom">
-      <td><b>Object Detection</b></td>
-      <td><b>Classification</b></td>
-      <td><b>Utilities</b></td>
-    </tr>
-    <tr valign="top">
-      <td>
-        <ul>
-          <li><a href="docs/models/yolo.md">YOLO (Ultralytics)</a></li>
-          <li><a href="docs/models/detr.md">DETR (HF)</a></li>
-          <li><a href="docs/models/vitdet.md">ViTDet (Detectron2)</a></li>
-          <li><a href="docs/models/openvino_yolo.md">OpenVINO-YOLO (CPU)</a></li>
-          <li><a href="docs/models/maskterial.md">MaskTerial (Mask2Former)</a></li>
-        </ul>
-      </td>
-      <td>
-        <ul>
-          <li><a href="docs/models/classifier.md">ResNet Layer Classifier</a></li>
-        </ul>
-      </td>
-      <td>
-        <ul>
-          <li><a href="docs/guide/calibration.md">Color Calibration</a></li>
-          <li><a href="docs/guide/patching.md">Patch-based Inference</a></li>
-          <li><a href="docs/guide/config.md">Configuration System</a></li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
+# Core deps
+pip install ultralytics transformers timm opencv-python pillow tqdm pyyaml yacs scikit-image numba
+
+# Detectron2
+pip install git+https://github.com/facebookresearch/detectron2.git@8d85329aed8506ea3672e3e208971345973ea761
+
+# Mask2Former CUDA op
+pip install --extra-index-url https://miropsota.github.io/torch_packages_builder \
+  MultiScaleDeformableAttention==1.0+9b0651cpt2.5.1cu118
+```
 
 ## Weights
 
 Organize weights in a `weights/` folder:
 
-- `weights/uark_detector_v3.pt` — YOLO detector
-- `weights/flake_monolayer_classifier.pth` — classifier
-- `weights/maskterial/{config.yaml, maskterial.pth}` — MaskTerial (optional)
+* YOLO detector: `weights/uark_detector_v3.pt`
+* Classifier: `weights/flake_monolayer_classifier.pth`
+
+Other backends (DETR, ViTDet, OpenVINO-YOLO, MaskTerial) accept their standard configs/checkpoints.
+
+>**Note:** The first time you use **ViTDet** or **MaskTerial**, QuantumFlake will auto-download the minimal upstream code into `~/.cache/quantumflake/` (no full repo clone needed).
+
+## Inference
+
+Default config:
+
+```bash
+python -m quantumflake.cli predict "/path/to/images_or_glob"
+```
+
+Override options with `--opts`.
+
+**YOLO:**
+
+```bash
+python -m quantumflake.cli predict "/path/to/images" \
+  --opts models.detector.type=yolo \
+         models.detector.yolo.weights=weights/uark_detector_v3.pt \
+         device=cuda:0 \
+         save_vis=true \
+         output_dir=runs/predict_yolo
+```
+
+**DETR:**
+
+```bash
+python -m quantumflake.cli predict "/path/to/images" \
+  --opts models.detector.type=detr \
+         models.detector.detr.architecture=facebook/detr-resnet-50 \
+         device=cuda:0 \
+         save_vis=true \
+         output_dir=runs/predict_detr
+```
+> For custom DETR heads, set `models.detector.num_labels` if your checkpoint expects a different class count.
+
+**ViTDet:**
+
+```bash
+python -m quantumflake.cli predict "/path/to/images" \
+  --opts models.detector.type=vitdet \
+         models.detector.vitdet.architecture="vitdet://COCO/mask_rcnn_vitdet_b_100ep.py" \
+         device=cuda:0 \
+         save_vis=true \
+         output_dir=runs/predict_vitdet
+```
+
+**OpenVINO-YOLO (CPU):**
+
+```bash
+python -m quantumflake.cli predict "/path/to/images" \
+  --opts models.detector.type=openvino_yolo \
+         models.detector.openvino_yolo.weights=weights/yolo_openvino/model.xml \
+         device=cpu \
+         save_vis=true \
+         output_dir=runs/predict_openvino
+```
+
+**MaskTerial (Detectron2 + Mask2Former):**
+
+```bash
+python -m quantumflake.cli predict "/path/to/images" \
+  --opts models.detector.type=maskterial \
+         models.detector.maskterial.architecture=weights/maskterial/config.yaml \
+         models.detector.maskterial.weights=weights/maskterial/maskterial.pth \
+         models.detector.conf_thresh=0.01 \
+         device=cuda:0 \
+         save_vis=true \
+         output_dir=runs/predict_maskterial
+```
+
+> If you see `No object named 'MaskFormer'` or MSDeformAttn warnings, ensure
+> `MultiScaleDeformableAttention`, `scikit-image`, and `numba` are installed (see Installation).
 
 ## Pipeline
 
@@ -92,7 +135,7 @@ Organize weights in a `weights/` folder:
 
 Example JSON record:
 
-```
+```json
 {
   "bbox": [x1, y1, x2, y2],
   "det_conf": 0.8731,
@@ -105,9 +148,40 @@ Overlays are saved as `vis_<image>.png`, and per-image detections as `<image_ste
 
 ## Configuration
 
-See [docs/guide/config.md](docs/guide/config.md) for instructions with adjusting the configurations.
+Use `-c config.yaml` or override with `--opts`.
 
-## Training (Overview)
+Example:
+
+```yaml
+device: "cuda:0"
+output_dir: "runs/predict"
+save_vis: true
+
+# Optional color calibration (off unless path is provided)
+use_calibration: false
+calibration_ref_path: ""  # e.g., "assets/calibration_ref.jpg"
+
+# Optional patch-based inference for large images
+patching:
+  use_patching: false
+  patch_size: 640
+
+models:
+  detector:
+    type: "yolo"
+    conf_thresh: 0.20
+    iou_thresh: 0.05
+    yolo:
+      weights: "weights/uark_detector_v3.pt"
+
+  classifier:
+    weights: "weights/flake_monolayer_classifier.pth"
+    class_names: ["1-layer", "5plus-layer"]
+    num_materials: 2
+    material_dim: 64
+```
+
+## Training
 
 ### Detector (YOLO)
 
@@ -115,7 +189,7 @@ Dataset YAML:
 
 ```yaml
 train: /path/to/detector_dataset/images/train
-val: /path/to/detector_dataset/images/val
+val:   /path/to/detector_dataset/images/val
 nc: 1
 names: ["flake"]
 ```
@@ -123,13 +197,12 @@ names: ["flake"]
 Train:
 
 ```bash
-python -m quantumflake.cli train detector   --data /path/to/dataset.yaml   --epochs 100   --imgsz 640   --device 0
+python -m quantumflake.cli train detector \
+  --data /path/to/dataset.yaml \
+  --epochs 100 \
+  --imgsz 640 \
+  --device 0
 ```
-
-> **DETR and YOLO** training details & tips live in their respective docs:
->
-> - YOLO — `docs/models/yolo.md`
-> - DETR — `docs/models/detr.md`
 
 ### Classifier (ImageFolder)
 
@@ -147,8 +220,34 @@ my_dataset/
 Train:
 
 ```bash
-python -m quantumflake.cli train classifier   --data my_dataset   --epochs 25   --device cuda:0   --save-dir runs/classify   --num-materials 2   --material-dim 64
+python -m quantumflake.cli train classifier \
+  --data my_dataset \
+  --epochs 25 \
+  --device cuda:0 \
+  --save-dir runs/classify \
+  --num-materials 2 \
+  --material-dim 64
 ```
+
+## Extending
+
+All detectors must return:
+
+* `boxes.xyxy → Tensor[N,4]`
+* `boxes.conf → Tensor[N]`
+* `orig_img → np.ndarray (BGR)`
+
+Add your backend in `models/detector.py` and expose config keys.
+
+---
+
+## Troubleshooting
+
+* **MaskTerial error**: install `MultiScaleDeformableAttention` wheel.
+* **Blank predictions**: lower `models.detector.conf_thresh`.
+* **Large images**: enable patching.
+* **OpenVINO issues**: weights must point to `.xml`.
+
 
 ## Project Structure
 
@@ -183,7 +282,8 @@ quantumflake/
 └─ README.md
 ```
 
-## Contributors
+<h2 align="center">Contributors</h2>
+<div align="center">
 
 <table>
   <thead>
