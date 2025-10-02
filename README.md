@@ -301,4 +301,7 @@ quantumflake/
     <tr><td>Dr. Khoa Luu</td><td>University of Arkansas</td></tr>
   </tbody>
 </table>
-</div>
+
+## License
+
+This project is released under the [MIT License](LICENSE).
