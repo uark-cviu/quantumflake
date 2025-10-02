@@ -201,7 +201,6 @@ class _DefaultPredictorLazy:
         _set(self.cfg, "model.retinanet.score_threshold")
 
     def __call__(self, original_image: np.ndarray):
-        import torch
         height, width = original_image.shape[:2]
         image = original_image
         if self.input_format == "RGB":
