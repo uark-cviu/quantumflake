@@ -11,6 +11,7 @@ from .models.classifier import FlakeLayerClassifier
 from .utils.data import crop_flakes, load_image
 from .utils.vis import draw_overlay
 from .utils.io import resolve_path
+from phi_adapt.modules import ShiftModule
 
 class FlakePipeline:
     def __init__(self, config: dict):
@@ -28,6 +29,15 @@ class FlakePipeline:
                     print(f"WARNING: Color reference image not found at {ref_path}. Calibration will be skipped.")
                 else:
                     print(f"Color calibration reference loaded from: {ref_path}")
+
+        use_phi_adapt = self.cfg['models'].get('use_phi_adapt', False)
+        if use_phi_adapt:
+            n_wavelengths = self.cfg['models']['n_wavelengths']
+            min_wavelength = self.cfg['models']['min_wavelength']
+            max_wavelength = self.cfg['models']['max_wavelength']
+            self.shift_module = ShiftModule(min_wavelength, max_wavelength, n_wavelengths)
+        else:
+            self.shift_module = None
 
         self.preprocess = transforms.Compose([
             transforms.Resize((224, 224)),
@@ -125,6 +135,10 @@ class FlakePipeline:
             if self.color_ref_bgr is not None:
                 proc_bgr = self.calibration(self.color_ref_bgr, orig_bgr)
                 calibration_active = True
+            
+            if self.shift_module is not None:
+                # print("Applying physics-based domain adaptation...")
+                proc_bgr = self.shift_module(proc_bgr)
 
             det_results = self._run_detection(proc_bgr)
             if det_results is None or len(det_results.boxes) == 0:
