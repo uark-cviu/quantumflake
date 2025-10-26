@@ -21,6 +21,8 @@ Supported detectors:
 - Standardized output across detectors  
 - ResNet-based classifier  
 - Optional color calibration, patch-based inference, JSON sidecars  
+- Include our research work (**φ-Adapt**)[https://github.com/uark-cviu/quantumflake/tree/main/phi_adapt], a physics-informed domain adaptation approach.
+- Include our research work (**CLIFF**)[https://github.com/uark-cviu/quantumflake/tree/main/cliff], a continual learning approach for incremental flake features.
 
 ## Installation
 Example (CUDA 11.8):
