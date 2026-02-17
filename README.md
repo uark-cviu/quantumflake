@@ -211,3 +211,21 @@ quantumflake/
 ## License
 
 This project is released under the [MIT License](LICENSE).
+
+## Citations
+
+```
+@article{pandey2025cliff,
+  title={CLIFF: Continual Learning for Incremental Flake Features in 2D Material Identification},
+  author={Pandey, Sankalp and Nguyen, Xuan Bac and Borys, Nicholas and Churchill, Hugh and Luu, Khoa},
+  journal={arXiv preprint arXiv:2508.17261},
+  year={2025}
+}
+
+@article{nguyen2025varphi,
+  title={$$\backslash$varphi $-Adapt: A Physics-Informed Adaptation Learning Approach to 2D Quantum Material Discovery},
+  author={Nguyen, Hoang-Quan and Nguyen, Xuan Bac and Pandey, Sankalp and Faltermeier, Tim and Borys, Nicholas and Churchill, Hugh and Luu, Khoa},
+  journal={arXiv preprint arXiv:2507.05184},
+  year={2025}
+}
+```
