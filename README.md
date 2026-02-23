@@ -215,6 +215,16 @@ This project is released under the [MIT License](LICENSE).
 ## Citations
 
 ```
+@misc{nguyen2026qupaintphysicsawareinstructiontuning,
+      title={QuPAINT: Physics-Aware Instruction Tuning Approach to Quantum Material Discovery}, 
+      author={Xuan-Bac Nguyen and Hoang-Quan Nguyen and Sankalp Pandey and Tim Faltermeier and Nicholas Borys and Hugh Churchill and Khoa Luu},
+      year={2026},
+      eprint={2602.17478},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2602.17478}, 
+}
+
 @article{pandey2025cliff,
   title={CLIFF: Continual Learning for Incremental Flake Features in 2D Material Identification},
   author={Pandey, Sankalp and Nguyen, Xuan Bac and Borys, Nicholas and Churchill, Hugh and Luu, Khoa},
@@ -228,4 +238,16 @@ This project is released under the [MIT License](LICENSE).
   journal={arXiv preprint arXiv:2507.05184},
   year={2025}
 }
+
+@ARTICLE{10684707,
+  author={Nguyen, Xuan Bac and Bisht, Apoorva and Thompson, Benjamin and Churchill, Hugh and Luu, Khoa and Khan, Samee U.},
+  journal={IEEE Access}, 
+  title={Two-Dimensional Quantum Material Identification via Self-Attention and Soft-Labeling in Deep Learning}, 
+  year={2024},
+  volume={12},
+  number={},
+  pages={139683-139691},
+  keywords={Microscopy;Optical imaging;Optical microscopy;Substrates;Quantum materials;Image color analysis;Annotations;Deep learning;Computer vision;Quantum material;2D flake detection;deep learning;computer vision;identification},
+  doi={10.1109/ACCESS.2024.3465221}}
+
 ```
