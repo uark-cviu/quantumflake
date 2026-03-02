@@ -4,19 +4,19 @@ This repository presents the official code for **CLIFF**, a continual learning f
 
 <h3 align="center">Abstract</h3>
 
-Characterizing quantum flakes is a critical step in quantum hardware engineering because the quality of these flakes directly influences qubit performance. Although computer vision methods for identifying two-dimensional quantum flakes have emerged, they still face significant challenges in estimating flake thickness. These challenges include limited data, poor generalization, sensitivity to domain shifts, and a lack of physical interpretability. In this paper, we introduce one of the first Physics-informed Adaptation Learning approaches to overcome these obstacles. We focus on two main issues, i.e., data scarcity and generalization. First, we propose a new synthetic data generation framework that produces diverse quantum flake samples across various materials and configurations, reducing the need for time-consuming manual collection. Second, we present -Adapt, a physics-informed adaptation method that bridges the performance gap between models trained on synthetic data and those deployed in real-world settings. Experimental results show that our approach achieves state-of-the-art performance on multiple benchmarks, outperforming existing methods. Our proposed approach advances the integration of physics-based modeling and domain adaptation. It also addresses a critical gap in leveraging synthesized data for real-world 2D material analysis, offering impactful tools for deep learning and materials science communities.
+Identifying quantum flakes is crucial for scalable quantum hardware; however, automated layer classification from optical microscopy remains challenging due to substantial appearance shifts across different materials. In this paper, we propose a new Continual-Learning Framework for Flake Layer Classification (CLIFF). To our knowledge, this is the first systematic study of continual learning in the domain of two-dimensional (2D) materials. Our method enables the model to differentiate between materials and their physical and optical properties by freezing a backbone and base head trained on a reference material. For each new material, it learns a material-specific prompt, embedding, and a delta head. A prompt pool and a cosine-similarity gate modulate features and compute material-specific corrections. Additionally, we incorporate memory replay with knowledge distillation. CLIFF achieves competitive accuracy with significantly lower forgetting than naive fine-tuning and a prompt-based baseline.
 
 
 ## Citation
 
 ```bibtex
-@misc{pandey2025cliff,
-title={CLIFF: Continual Learning for Incremental Flake Features in 2D Material Identification},
-author={Sankalp Pandey and Xuan Bac Nguyen and Nicholas Borys and Hugh Churchill and Khoa Luu},
-year={2025},
-eprint={2508.17261},
-archivePrefix={arXiv},
-primaryClass={cs.CV},
-url={https://arxiv.org/abs/2508.17261},
+@misc{pandey2026cliffcontinuallearningincremental,
+      title={CLIFF: Continual Learning for Incremental Flake Features in 2D Material Identification}, 
+      author={Sankalp Pandey and Xuan Bac Nguyen and Nicholas Borys and Hugh Churchill and Khoa Luu},
+      year={2026},
+      eprint={2508.17261},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2508.17261}, 
 }
 ```
