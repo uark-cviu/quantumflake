@@ -36,7 +36,7 @@ The main branch works with **PyTorch 2.5+** and **Python 3.12+**.
 
 ### Extended Research Showcase
 Extras from our lab you can explore independently of the core framework.
-- [**QuPAINT**](./qupaint) - 
+- [**QuPAINT**](./qupaint) - Multimodal reasoning with physics-aware instruction-tuning pipeline
 - [**φ-Adapt**](./phi_adapt) — physics-informed domain adaptation.
 - [**CLIFF**](./cliff) — continual learning for incremental flake features.
 
