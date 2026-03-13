@@ -33,9 +33,10 @@ The main branch works with **PyTorch 2.5+** and **Python 3.12+**.
 - **Extras** — Optional color calibration, patch-based inference for large images, progress bars, and reproducible configs.
 </details>
 
-### Related Research Showcase
-Extras from our lab you can explore independently of the core framework.
 
+### Extended Research Showcase
+Extras from our lab you can explore independently of the core framework.
+- [**QuPAINT**](./qupaint) - 
 - [**φ-Adapt**](./phi_adapt) — physics-informed domain adaptation.
 - [**CLIFF**](./cliff) — continual learning for incremental flake features.
 
@@ -82,6 +83,8 @@ Please refer to **[Installation](docs/get_started.md)** for setup instructions (
 </table>
 
 ## Weights
+For quick start, use our lightweight open-source weights: [2D Quantum Material Characterization](https://huggingface.co/collections/uark-cviu/2d-quantum-material-characterization)
+
 
 Organize weights in a `weights/` folder:
 
