@@ -230,10 +230,6 @@ quantumflake/
   </tbody>
 </table>
 
-## License
-
-MIT
-
 ## Citations
 
 ```bibtex
