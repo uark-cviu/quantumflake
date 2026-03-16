@@ -12,19 +12,18 @@ Characterizing quantum flakes is a critical step in quantum hardware engineering
 
 Please follow the installation in [here](https://github.com/uark-cviu/quantumflake?tab=readme-ov-file#installation).
 
-### Module Weights
-
-Organize the weights in a `weights/` folder as:
-- `weights/spectrum_inv.pth`
-
 ### How to use
 
-The module can work with every detection models. To enable **φ-Adapt**, run:
-```bash
-python -m quantumflake.cli predict "/path/to/images_or_glob" \
-    --opts models.use_phi_adapt=true \
-           models.spectrum_inv.weights=weights/spectrum_inv.pth
-```
+`φ-Adapt` is included here as a research subproject, but it is not part of the default QuantumFlake quick-start.
+
+For the standard `quantumflake` inference pipeline, you only need:
+
+- a detector checkpoint
+- a classifier checkpoint
+
+The top-level pipeline does not currently load an external `spectrum_inv.pth`, so that file should not be documented as a required artifact for normal inference.
+
+Treat the in-tree `models.use_phi_adapt` path as experimental until the adaptation-specific checkpoint loading and preprocessing path are finalized.
 
 ## Citation
 

@@ -1,6 +1,7 @@
 from pathlib import Path
 import yaml
 from ultralytics import YOLO
+from math import ceil
 
 def train_yolo(data, epochs=50, imgsz=640, device="0", weights="yolo11n.pt", project="runs/detect_train"):
     print("\n--- Starting YOLO Detector Training ---")
@@ -135,13 +136,116 @@ def train_detr(
 
 _DETECTRON2_OK = True
 try:
-    from detectron2.config import get_cfg
-    from detectron2.engine import DefaultTrainer
-    from detectron2.evaluation import COCOEvaluator
+    from detectron2.checkpoint import DetectionCheckpointer
+    from detectron2.config import get_cfg, LazyConfig, instantiate
+    from detectron2.data import DatasetCatalog
     from detectron2 import model_zoo
+    from detectron2.engine import AMPTrainer, DefaultTrainer, SimpleTrainer, create_ddp_model, default_writers, hooks
+    from detectron2.evaluation import COCOEvaluator, inference_on_dataset, print_csv_format
     from detectron2.data.datasets import register_coco_instances
 except Exception:
     _DETECTRON2_OK = False
+
+
+def _register_coco_once(name, ann_json, images_dir):
+    if name not in DatasetCatalog.list():
+        register_coco_instances(name, {}, ann_json, images_dir)
+
+
+def _resolve_vitdet_architecture(architecture):
+    if architecture.startswith("vitdet://"):
+        from ..utils.vitdet_bootstrap import ensure_vitdet_available, resolve_vitdet_config_path
+
+        proj_root = ensure_vitdet_available()
+        return resolve_vitdet_config_path(architecture, proj_root)
+    if architecture.startswith("model_zoo:"):
+        return model_zoo.get_config_file(architecture.split("model_zoo:", 1)[1])
+    return architecture
+
+
+def _count_coco_images(ann_json):
+    with open(ann_json, "r") as f:
+        return len(json.load(f)["images"])
+
+
+def _coco_has_segmentation(ann_json):
+    with open(ann_json, "r") as f:
+        anns = json.load(f).get("annotations", [])
+    return any(ann.get("segmentation") for ann in anns)
+
+
+def _train_vitdet_lazy(
+    cfg_path,
+    weights,
+    train_name,
+    val_name,
+    train_json,
+    device,
+    epochs,
+    base_lr,
+    ims_per_batch,
+    eval_period,
+    out_dir,
+):
+    cfg = LazyConfig.load(cfg_path)
+    cfg.dataloader.train.dataset.names = train_name
+    cfg.dataloader.test.dataset.names = val_name
+    cfg.dataloader.train.total_batch_size = ims_per_batch
+    cfg.dataloader.train.num_workers = 0
+    cfg.dataloader.test.num_workers = 0
+    cfg.train.device = "cuda" if str(device).lower() != "cpu" else "cpu"
+    if cfg.train.device == "cpu":
+        cfg.train.amp.enabled = False
+    cfg.train.output_dir = out_dir
+    cfg.train.eval_period = eval_period
+    cfg.train.log_period = 1
+    cfg.train.max_iter = max(1, epochs * ceil(_count_coco_images(train_json) / max(ims_per_batch, 1)))
+    if hasattr(cfg.model, "roi_heads"):
+        cfg.model.roi_heads.num_classes = 1
+        if not _coco_has_segmentation(train_json):
+            cfg.model.roi_heads.mask_in_features = None
+            cfg.model.roi_heads.mask_pooler = None
+            cfg.model.roi_heads.mask_head = None
+            cfg.dataloader.train.mapper.use_instance_mask = False
+            cfg.dataloader.train.mapper.recompute_boxes = False
+    if weights:
+        cfg.train.init_checkpoint = weights
+    cfg.optimizer.lr = base_lr
+
+    model = instantiate(cfg.model)
+    model.to(cfg.train.device)
+    cfg.optimizer.params.model = model
+    optimizer = instantiate(cfg.optimizer)
+    train_loader = instantiate(cfg.dataloader.train)
+    model = create_ddp_model(model, **cfg.train.ddp)
+
+    trainer_cls = AMPTrainer if cfg.train.amp.enabled else SimpleTrainer
+    trainer = trainer_cls(model, train_loader, optimizer)
+    checkpointer = DetectionCheckpointer(model, save_dir=cfg.train.output_dir, trainer=trainer)
+
+    def _do_test():
+        test_loader = instantiate(cfg.dataloader.test)
+        evaluator = instantiate(cfg.dataloader.evaluator)
+        ret = inference_on_dataset(model, test_loader, evaluator)
+        print_csv_format(ret)
+        return ret
+
+    trainer.register_hooks([
+        hooks.IterationTimer(),
+        hooks.LRScheduler(scheduler=instantiate(cfg.lr_multiplier)),
+        hooks.PeriodicCheckpointer(
+            checkpointer,
+            period=int(cfg.train.checkpointer.period),
+            max_to_keep=int(cfg.train.checkpointer.max_to_keep),
+        ),
+        hooks.EvalHook(cfg.train.eval_period, _do_test) if cfg.train.eval_period > 0 else None,
+        hooks.PeriodicWriter(default_writers(cfg.train.output_dir, cfg.train.max_iter), period=cfg.train.log_period),
+    ])
+
+    if cfg.train.init_checkpoint:
+        checkpointer.resume_or_load(cfg.train.init_checkpoint, resume=False)
+    trainer.train(0, cfg.train.max_iter)
+    checkpointer.save("model_final")
 
 def train_vitdet(
     architecture, weights,
@@ -155,33 +259,47 @@ def train_vitdet(
     if not _DETECTRON2_OK:
         raise ImportError("Detectron2 is required for ViTDet training. Please install detectron2.")
 
-    register_coco_instances(train_name, {}, train_json, train_images)
-    register_coco_instances(val_name,   {}, val_json,   val_images)
+    _register_coco_once(train_name, train_json, train_images)
+    _register_coco_once(val_name, val_json, val_images)
+
+    cfg_path = _resolve_vitdet_architecture(architecture)
+
+    print("\n--- Starting ViTDet Training (Detectron2) ---")
+    if cfg_path.endswith(".py"):
+        _train_vitdet_lazy(
+            cfg_path=cfg_path,
+            weights=weights,
+            train_name=train_name,
+            val_name=val_name,
+            train_json=train_json,
+            device=device,
+            epochs=epochs,
+            base_lr=base_lr,
+            ims_per_batch=ims_per_batch,
+            eval_period=eval_period,
+            out_dir=out_dir,
+        )
+        print("\n--- ViTDet Training Finished ---")
+        print(f"Artifacts saved to: {out_dir}")
+        return
 
     cfg = get_cfg()
-    if architecture.startswith("model_zoo:"):
-        zoo_key = architecture.split("model_zoo:", 1)[1]
-        cfg.merge_from_file(model_zoo.get_config_file(zoo_key))
-        if not weights:
-            cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(zoo_key)
-    else:
-        cfg.merge_from_file(architecture)
-        if not weights:
-            raise ValueError("ViTDet training with local config requires --vit-weights")
+    cfg.merge_from_file(cfg_path)
     if weights:
         cfg.MODEL.WEIGHTS = weights
-
+    elif architecture.startswith("model_zoo:"):
+        zoo_key = architecture.split("model_zoo:", 1)[1]
+        cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(zoo_key)
+    else:
+        raise ValueError("ViTDet training with local YAML configs requires --vit-weights")
     cfg.DATASETS.TRAIN = (train_name,)
     cfg.DATASETS.TEST  = (val_name,)
     cfg.DATALOADER.NUM_WORKERS = 4
 
     cfg.SOLVER.IMS_PER_BATCH = ims_per_batch
     cfg.SOLVER.BASE_LR = base_lr
-    import json as _json
-    import os as _os
-    with open(train_json, "r") as f:
-        n_imgs = len(_json.load(f)["images"])
-    iters_per_epoch = max(1, n_imgs // ims_per_batch)
+    n_imgs = _count_coco_images(train_json)
+    iters_per_epoch = max(1, ceil(n_imgs / max(ims_per_batch, 1)))
     cfg.SOLVER.MAX_ITER = epochs * iters_per_epoch
     cfg.SOLVER.STEPS = []
     cfg.SOLVER.WARMUP_ITERS = min(1000, iters_per_epoch // 5)
@@ -198,7 +316,6 @@ def train_vitdet(
         def build_evaluator(cls, cfg, dataset_name, output_folder=None):
             return COCOEvaluator(dataset_name, output_dir=cfg.OUTPUT_DIR)
 
-    print("\n--- Starting ViTDet Training (Detectron2) ---")
     trainer = _Trainer(cfg)
     trainer.resume_or_load(resume=False)
     trainer.train()

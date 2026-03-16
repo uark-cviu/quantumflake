@@ -2,7 +2,6 @@ import os
 import sys
 import io
 import tarfile
-import tempfile
 import urllib.request
 from pathlib import Path
 
@@ -10,6 +9,12 @@ _DEFAULT_BRANCH = "main"
 _TARBALL_URL = f"https://codeload.github.com/facebookresearch/detectron2/tar.gz/refs/heads/{{branch}}"
 
 def _cache_root():
+    override = os.environ.get("QUANTUMFLAKE_CACHE_DIR")
+    if override:
+        return Path(override).expanduser() / "vitdet"
+    xdg = os.environ.get("XDG_CACHE_HOME")
+    if xdg:
+        return Path(xdg).expanduser() / "quantumflake" / "vitdet"
     return Path(os.path.expanduser("~")) / ".cache" / "quantumflake" / "vitdet"
 
 def _project_root(cache_dir: Path, branch: str):

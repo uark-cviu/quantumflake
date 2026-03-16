@@ -10,6 +10,12 @@ _DEFAULT_BRANCH = "main"
 _TARBALL_URL = "https://codeload.github.com/Jaluus/MaskTerial/tar.gz/refs/heads/{branch}"
 
 def _cache_root() -> Path:
+    override = os.environ.get("QUANTUMFLAKE_CACHE_DIR")
+    if override:
+        return Path(override).expanduser() / "maskterial"
+    xdg = os.environ.get("XDG_CACHE_HOME")
+    if xdg:
+        return Path(xdg).expanduser() / "quantumflake" / "maskterial"
     return Path.home() / ".cache" / "quantumflake" / "maskterial"
 
 def _find_project_root(base: Path) -> Optional[Path]:

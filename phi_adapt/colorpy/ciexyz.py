@@ -119,7 +119,10 @@ along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 
 import math, numpy
 
-from colorpy import colormodels
+try:
+    from . import colormodels
+except ImportError:
+    import colormodels
 
 # Assumed physical brightness of the monitor [W/m^2]
 #   80 cd/m^2 * 20.3 mW/cd (assuming light at 556 nm)

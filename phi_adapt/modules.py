@@ -1,9 +1,8 @@
 import torch
 import torch.nn as nn
 
-import colorpy.ciexyz
-
-from material_index import (
+from .colorpy import ciexyz
+from .material_index import (
     MATERIAL_INDEX_DICT,
     Air_Index,
     MoS2_Index,
@@ -43,7 +42,7 @@ class Spectrum(nn.Module):
             p.requires_grad = False
 
         for i, wl in enumerate(np.linspace(start_wl, end_wl, n_wl)):
-            color = colorpy.ciexyz.xyz_from_wavelength(wl)
+            color = ciexyz.xyz_from_wavelength(wl)
             color = torch.from_numpy(color)
 
             self.conv.weight.data[:, i, 0, 0] = color

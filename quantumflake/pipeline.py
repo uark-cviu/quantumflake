@@ -11,7 +11,6 @@ from .models.classifier import FlakeLayerClassifier
 from .utils.data import crop_flakes, load_image
 from .utils.vis import draw_overlay
 from .utils.io import resolve_path
-from phi_adapt.modules import ShiftModule
 
 class FlakePipeline:
     def __init__(self, config: dict):
@@ -32,6 +31,8 @@ class FlakePipeline:
 
         use_phi_adapt = self.cfg['models'].get('use_phi_adapt', False)
         if use_phi_adapt:
+            from phi_adapt.modules import ShiftModule
+
             n_wavelengths = self.cfg['models']['n_wavelengths']
             min_wavelength = self.cfg['models']['min_wavelength']
             max_wavelength = self.cfg['models']['max_wavelength']
@@ -49,7 +50,7 @@ class FlakePipeline:
         cls_weights_path = resolve_path(self.cfg['models']['classifier']['weights'])
         cls_params = self.cfg['models']['classifier']
 
-        checkpoint = torch.load(cls_weights_path, map_location=self.device)
+        checkpoint = torch.load(cls_weights_path, map_location=self.device, weights_only=False)
         self.class_names = checkpoint.get('class_names') or cls_params.get('class_names')
         if not self.class_names:
             raise ValueError("Class names not found in classifier checkpoint or config.")

@@ -19,6 +19,7 @@ models:
     max_wavelength: 760
 
   spectrum_inv:
+    # Reserved for experimental phi_adapt work. The standard pipeline does not load this file.
     weights: "weights/spectrum_inv.pth"
 
   detector:
@@ -35,7 +36,7 @@ models:
       num_labels: 1                              # number of foreground classes (flakes = 1)
 
     vitdet:
-      architecture: "model_zoo:COCO-Detection/retinanet_ViTDet_B_100ep.yaml"
+      architecture: "vitdet://COCO/mask_rcnn_vitdet_b_100ep.py"
       weights: "" # provide a .pth
 
     openvino_yolo:

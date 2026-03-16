@@ -1,4 +1,5 @@
 import io
+import os
 import sys
 import tarfile
 import urllib.request
@@ -11,6 +12,12 @@ _TARBALLS = [
 ]
 
 def _cache_root() -> Path:
+    override = os.environ.get("QUANTUMFLAKE_CACHE_DIR")
+    if override:
+        return Path(override).expanduser() / "mask2former"
+    xdg = os.environ.get("XDG_CACHE_HOME")
+    if xdg:
+        return Path(xdg).expanduser() / "quantumflake" / "mask2former"
     return Path.home() / ".cache" / "quantumflake" / "mask2former"
 
 def _find_parent_with_pkg(base: Path) -> Optional[Path]:

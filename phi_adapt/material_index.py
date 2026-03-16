@@ -1,5 +1,9 @@
 import numpy as np
 from scipy.interpolate import interp1d
+from pathlib import Path
+
+
+_DATA_DIR = Path(__file__).resolve().parent.parent / "material_data"
 
 
 Si_index = np.array(
@@ -172,10 +176,10 @@ SiO2_Index = MaterialIndex(index=SiO2_index, ext=None)
 # MoS2_Index = MaterialIndex2()
 Air_Index = lambda x: 1
 
-MoS2_Index = MaterialIndex2(np.loadtxt("../material_data/MoS2.csv"))
-MoSe2_Index = MaterialIndex2(np.loadtxt("../material_data/MoSe2.csv"))
-WS2_Index = MaterialIndex2(np.loadtxt("../material_data/WS2.csv"))
-WSe2_Index = MaterialIndex2(np.loadtxt("../material_data/WSe2.csv"))
+MoS2_Index = MaterialIndex2(np.loadtxt(_DATA_DIR / "MoS2.csv"))
+MoSe2_Index = MaterialIndex2(np.loadtxt(_DATA_DIR / "MoSe2.csv"))
+WS2_Index = MaterialIndex2(np.loadtxt(_DATA_DIR / "WS2.csv"))
+WSe2_Index = MaterialIndex2(np.loadtxt(_DATA_DIR / "WSe2.csv"))
 
 
 MATERIAL_INDEX_DICT = {

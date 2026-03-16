@@ -1,17 +1,33 @@
 import cv2
 import numpy as np
+import os
+import platform
 import torch
 from pathlib import Path
 from typing import List, Union, Dict, Any, Optional
 from PIL import Image
 from ultralytics import YOLO
 from transformers import AutoImageProcessor, AutoModelForObjectDetection
+from ..utils.io import resolve_path
+
+os.environ.setdefault("TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD", "1")
+
+try:
+    from omegaconf.dictconfig import DictConfig
+    from omegaconf.listconfig import ListConfig
+
+    if hasattr(torch.serialization, "add_safe_globals"):
+        torch.serialization.add_safe_globals([DictConfig, ListConfig])
+except Exception:
+    pass
+
 _DETECTRON2_OK = True
 try:
     from detectron2.config import LazyConfig, instantiate, get_cfg
     from detectron2.checkpoint import DetectionCheckpointer
     from detectron2.data.transforms import ResizeShortestEdge
     from detectron2.engine import DefaultPredictor
+    from detectron2 import model_zoo
 except Exception:
     _DETECTRON2_OK = False
 
@@ -61,8 +77,30 @@ class FastOpenVINOYOLO:
         self.input_width  = int(self.input_layer.shape[3])
         self.output_ports = list(self.model.outputs)
         print(f"[OpenVINO YOLO] Model input shape: {self.input_layer.shape}")
-        self.compiled_model = core.compile_model(self.model, "CPU")
-        print("[OpenVINO YOLO] Compiled for CPU")
+        requested_device = str(device or "cpu").strip().upper()
+        if requested_device.startswith("OPENVINO:"):
+            requested_device = requested_device.split(":", 1)[1]
+        if requested_device.startswith("CUDA"):
+            requested_device = "GPU"
+        if requested_device in {"CPU:0", "CPU"}:
+            requested_device = "CPU"
+        elif requested_device in {"AUTO", "GPU", "NPU"}:
+            requested_device = requested_device
+        else:
+            requested_device = "CPU"
+        self.device_name = requested_device
+        try:
+            self.compiled_model = core.compile_model(self.model, self.device_name)
+        except RuntimeError as exc:
+            available = ", ".join(core.available_devices) or "<none>"
+            hint = ""
+            if platform.system() == "Darwin" and platform.machine().lower() in {"arm64", "aarch64"}:
+                hint = " OpenVINO's CPU plugin can fail on Apple Silicon even when the IR exports successfully."
+            raise RuntimeError(
+                f"OpenVINO failed to compile '{xml_path}' for device '{self.device_name}'. "
+                f"Available devices: {available}.{hint}"
+            ) from exc
+        print(f"[OpenVINO YOLO] Compiled for {self.device_name}")
         self._ov = ov
 
     def _preprocess_image(self, image_bgr: np.ndarray):
@@ -106,18 +144,23 @@ class FastOpenVINOYOLO:
         x1 = x_c - w / 2; y1 = y_c - h / 2
         x2 = x_c + w / 2; y2 = y_c + h / 2
         boxes_xyxy = np.column_stack([x1, y1, x2, y2])
+        boxes_xywh = np.column_stack([x1, y1, w, h])
         pad_w, pad_h = padding
         boxes_xyxy[:, [0, 2]] = (boxes_xyxy[:, [0, 2]] - pad_w) / scale_ratio
         boxes_xyxy[:, [1, 3]] = (boxes_xyxy[:, [1, 3]] - pad_h) / scale_ratio
+        boxes_xywh[:, [0, 2]] = (boxes_xywh[:, [0, 2]] - np.array([pad_w, 0])) / scale_ratio
+        boxes_xywh[:, [1, 3]] = (boxes_xywh[:, [1, 3]] - np.array([pad_h, 0])) / scale_ratio
         boxes_xyxy[:, [0, 2]] = np.clip(boxes_xyxy[:, [0, 2]], 0, orig_shape[1])
         boxes_xyxy[:, [1, 3]] = np.clip(boxes_xyxy[:, [1, 3]], 0, orig_shape[0])
-        idxs = cv2.dnn.NMSBoxes(boxes_xyxy.tolist(), scores.tolist(), conf_thresh, iou_thresh)
+        boxes_xywh[:, [0, 2]] = np.clip(boxes_xywh[:, [0, 2]], 0, orig_shape[1])
+        boxes_xywh[:, [1, 3]] = np.clip(boxes_xywh[:, [1, 3]], 0, orig_shape[0])
+        idxs = cv2.dnn.NMSBoxes(boxes_xywh.tolist(), scores.tolist(), conf_thresh, iou_thresh)
         if len(idxs) == 0:
             return [], []
         idxs = np.array(idxs).reshape(-1)
         return boxes_xyxy[idxs].tolist(), scores[idxs].tolist()
 
-    def predict(self, image: np.ndarray, conf: float, iou: float):
+    def _predict_one(self, image: np.ndarray, conf: float, iou: float):
         orig_shape = image.shape
         inp, r, pad = self._preprocess_image(image)
         result = self.compiled_model([inp])
@@ -125,19 +168,20 @@ class FastOpenVINOYOLO:
         boxes, scores = self._postprocess(det, r, pad, conf, iou, orig_shape)
         return StandardizedResults(boxes, scores, image)
 
+    def predict(self, image: Union[np.ndarray, List[np.ndarray]], conf: float, iou: float):
+        if isinstance(image, list):
+            return [self._predict_one(im, conf, iou) for im in image]
+        return self._predict_one(image, conf, iou)
+
 class DETRDetector:
     def __init__(self, architecture: str, weights: str, device: str, num_labels: int = 1):
         self.architecture = architecture
         self.weights = weights
         self.device = torch.device(device)
         print(f"[DETR] Loading arch='{architecture}', weights='{weights or 'hub'}', num_labels={num_labels}")
-        self.processor = AutoImageProcessor.from_pretrained(self.architecture)
         load_from = self.weights if self.weights and Path(self.weights).exists() else self.architecture
-        self.model = AutoModelForObjectDetection.from_pretrained(
-            load_from,
-            num_labels=num_labels,
-            ignore_mismatched_sizes=True,
-        ).to(self.device).eval()
+        self.processor = AutoImageProcessor.from_pretrained(load_from)
+        self.model = AutoModelForObjectDetection.from_pretrained(load_from).to(self.device).eval()
 
     def _predict_one(self, image_bgr: np.ndarray, conf: float) -> StandardizedResults:
         image_pil = Image.fromarray(cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)).convert("RGB")
@@ -157,11 +201,26 @@ class DETRDetector:
 
 
 class _DefaultPredictorLazy:
-    def __init__(self, cfg_path: str, device: str, test_score_thresh: Optional[float] = None, weights_override: Optional[str] = None):
+    def __init__(
+        self,
+        cfg_path: str,
+        device: str,
+        test_score_thresh: Optional[float] = None,
+        weights_override: Optional[str] = None,
+        num_classes: Optional[int] = None,
+        box_only: bool = False,
+    ):
         if not _DETECTRON2_OK:
             raise ImportError("Detectron2 is required for this model.")
         self.device = "cuda" if str(device).startswith("cuda") else "cpu"
         self.cfg = LazyConfig.load(cfg_path)
+
+        if num_classes is not None and "model" in self.cfg and hasattr(self.cfg.model, "roi_heads"):
+            self.cfg.model.roi_heads.num_classes = int(num_classes)
+        if box_only and "model" in self.cfg and hasattr(self.cfg.model, "roi_heads"):
+            self.cfg.model.roi_heads.mask_in_features = None
+            self.cfg.model.roi_heads.mask_pooler = None
+            self.cfg.model.roi_heads.mask_head = None
 
         if test_score_thresh is not None:
             self._try_set_thresh(float(test_score_thresh))
@@ -213,7 +272,7 @@ class _DefaultPredictorLazy:
         return preds
 
 class VITDetDetector:
-    def __init__(self, architecture: str, weights: str, device: str, conf_thresh: float = 0.25):
+    def __init__(self, architecture: str, weights: str, device: str, conf_thresh: float = 0.25, num_classes: int = 1):
         if not _DETECTRON2_OK:
             raise ImportError("Detectron2 is required for 'vitdet'. Please install detectron2.")
         if not architecture:
@@ -223,15 +282,20 @@ class VITDetDetector:
         proj_root = ensure_vitdet_available()
         if architecture.startswith("vitdet://"):
             architecture = resolve_vitdet_config_path(architecture, proj_root)
+        elif architecture.startswith("model_zoo:"):
+            architecture = model_zoo.get_config_file(architecture.split("model_zoo:", 1)[1])
 
         self.device = device if str(device).startswith("cuda") else "cpu"
         self.conf_thresh = float(conf_thresh)
+        self.num_classes = int(num_classes)
 
         self.predictor = _DefaultPredictorLazy(
             architecture,
             self.device,
             test_score_thresh=self.conf_thresh,
-            weights_override=weights if weights else None
+            weights_override=weights if weights else None,
+            num_classes=self.num_classes,
+            box_only=True,
         )
 
     def _predict_one(self, image_bgr: np.ndarray) -> StandardizedResults:
@@ -307,6 +371,12 @@ def _build_predictor_from_yaml(cfg_path: str, device: str, conf: float, weights:
 
     if weights:
         cfg.MODEL.WEIGHTS = weights
+    else:
+        default_weights = getattr(cfg.MODEL, "WEIGHTS", "")
+        if default_weights and not default_weights.startswith(("detectron2://", "http://", "https://")):
+            candidate = (Path(cfg_path).resolve().parent / default_weights).resolve()
+            if candidate.exists():
+                cfg.MODEL.WEIGHTS = str(candidate)
 
     cfg.MODEL.DEVICE = "cuda" if str(device).startswith("cuda") else "cpu"
     if hasattr(cfg.MODEL, "ROI_HEADS"):
@@ -393,6 +463,15 @@ def _resolve_backend_cfg(det_cfg: dict, model_type: str) -> dict:
     merged.update(backend)
     return merged
 
+
+def _resolve_local_artifact(value: str) -> str:
+    if not value:
+        return value
+    if value.startswith(("model_zoo:", "vitdet://", "maskterial://")):
+        return value
+    candidate = resolve_path(value)
+    return str(candidate) if candidate.exists() else value
+
 def get_detector(config: dict):
     det_cfg    = config['models']['detector']
     model_type = det_cfg.get('type', 'yolo').lower()
@@ -406,12 +485,14 @@ def get_detector(config: dict):
         weights = eff.get('weights') or eff.get('yolo', {}).get('weights')
         if not weights:
             raise ValueError("YOLO detector requires 'models.detector.yolo.weights'.")
+        weights = _resolve_local_artifact(weights)
         return YOLODetector(weights, device)
 
     if model_type == 'openvino_yolo':
         weights = eff.get('weights') or eff.get('openvino_yolo', {}).get('weights')
         if not weights:
             raise ValueError("OpenVINO YOLO requires 'models.detector.openvino_yolo.weights'.")
+        weights = _resolve_local_artifact(weights)
         return FastOpenVINOYOLO(weights, device)
 
     if model_type in ('detr', 'transformers'):
@@ -419,6 +500,8 @@ def get_detector(config: dict):
         if not architecture:
             raise ValueError("'architecture' is required for detector type 'detr'.")
         weights = eff.get('weights') or eff.get('detr', {}).get('weights', "")
+        architecture = _resolve_local_artifact(architecture)
+        weights = _resolve_local_artifact(weights)
         num_labels = int(eff.get('num_labels', det_cfg.get('num_labels', 1)))
         return DETRDetector(architecture, weights, device, num_labels=num_labels)
 
@@ -427,13 +510,18 @@ def get_detector(config: dict):
         if not architecture:
             raise ValueError("'architecture' is required for detector type 'vitdet'.")
         weights = eff.get('weights') or eff.get('vitdet', {}).get('weights', "")
-        return VITDetDetector(architecture, weights, device, conf_thresh=conf_thresh)
+        num_classes = int(eff.get('num_labels', eff.get('num_classes', det_cfg.get('num_labels', 1))))
+        architecture = _resolve_local_artifact(architecture)
+        weights = _resolve_local_artifact(weights)
+        return VITDetDetector(architecture, weights, device, conf_thresh=conf_thresh, num_classes=num_classes)
 
     if model_type in ('maskterial', 'maskterial_det', 'maskterial_seg'):
         architecture = eff.get('architecture') or eff.get('maskterial', {}).get('architecture')
         if not architecture:
             raise ValueError("'architecture' is required for detector type 'maskterial'.")
         weights = eff.get('weights') or eff.get('maskterial', {}).get('weights', "")
+        architecture = _resolve_local_artifact(architecture)
+        weights = _resolve_local_artifact(weights)
         mask_thresh = float(eff.get('mask_thresh', eff.get('maskterial', {}).get('mask_thresh', 0.5)))
         return MaskTerialDetector(architecture, weights, device, conf_thresh=conf_thresh, mask_thresh=mask_thresh)
 
