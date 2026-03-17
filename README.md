@@ -225,13 +225,13 @@ quantumflake/
 
 ```bibtex
 @misc{nguyen2026qupaintphysicsawareinstructiontuning,
-      title={QuPAINT: Physics-Aware Instruction Tuning Approach to Quantum Material Discovery},
-      author={Xuan-Bac Nguyen and Hoang-Quan Nguyen and Sankalp Pandey and Tim Faltermeier and Nicholas Borys and Hugh Churchill and Khoa Luu},
-      year={2026},
-      eprint={2602.17478},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV},
-      url={https://arxiv.org/abs/2602.17478},
+  title={QuPAINT: Physics-Aware Instruction Tuning Approach to Quantum Material Discovery},
+  author={Xuan-Bac Nguyen and Hoang-Quan Nguyen and Sankalp Pandey and Tim Faltermeier and Nicholas Borys and Hugh Churchill and Khoa Luu},
+  year={2026},
+  eprint={2602.17478},
+  archivePrefix={arXiv},
+  primaryClass={cs.CV},
+  url={https://arxiv.org/abs/2602.17478},
 }
 
 @article{pandey2025cliff,
@@ -258,5 +258,4 @@ quantumflake/
   pages={139683-139691},
   keywords={Microscopy;Optical imaging;Optical microscopy;Substrates;Quantum materials;Image color analysis;Annotations;Deep learning;Computer vision;Quantum material;2D flake detection;deep learning;computer vision;identification},
   doi={10.1109/ACCESS.2024.3465221}}
-
 ```
