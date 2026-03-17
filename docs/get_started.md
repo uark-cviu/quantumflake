@@ -49,7 +49,7 @@ Other detector backends need user-supplied compatible artifacts:
 - MaskTerial: your own config + weights
 - OpenVINO-YOLO: an exported OpenVINO IR (`.xml` + `.bin`) from a YOLO `.pt` checkpoint
 
-For optional domain adaptation usage from $\varphi$-Adapt, download `spectrum_inv.pth`.
+For optional domain adaptation usage from $\varphi$-Adapt, download `spectrum_inv.pth`. However, this is still experimental.
 
 ## Quick Inference
 

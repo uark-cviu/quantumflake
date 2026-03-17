@@ -22,7 +22,7 @@ The default pipeline uses:
 - one detector checkpoint
 - one classifier checkpoint
 
-QuantumFlake does **not** ship a `weights/` directory. Download the checkpoints you need from our Hugging Face collection and either place them in a local folder you create yourself or pass absolute paths with `--opts`.
+Download the checkpoints you need from our Hugging Face collection and either place them in a local folder named `weights/` or pass absolute paths with `--opts`.
 
 <details open>
 <summary>Major features</summary>
@@ -62,16 +62,10 @@ Notes:
 - ViTDet and MaskTerial need Detectron2.
 - MaskTerial also needs `MultiScaleDeformableAttention`.
 - OpenVINO-YOLO needs `openvino`.
-- ViTDet and MaskTerial bootstrap their upstream source trees into a cache directory on first use. Set `QUANTUMFLAKE_CACHE_DIR=/path/to/cache` if you do not want to use the default cache location.
 
 ## Weights
 
 Download checkpoints from the [2D Quantum Material Characterization collection](https://huggingface.co/collections/uark-cviu/2d-quantum-material-characterization).
-
-The public `uark-cviu` Hugging Face org currently publishes:
-
-- `uark-cviu/flake-detector`
-- `uark-cviu/flake-classifier`
 
 For the standard YOLO + classifier pipeline, you need:
 
@@ -80,13 +74,11 @@ For the standard YOLO + classifier pipeline, you need:
 
 Optional files:
 
-- a DETR checkpoint directory saved with `save_pretrained(...)` if you want the DETR backend
-- a ViTDet `model_final.pth` checkpoint if you want the ViTDet backend
-- your own MaskTerial config + weights if you want the MaskTerial backend
-- an OpenVINO IR (`.xml` + `.bin`) exported from a YOLO `.pt` checkpoint if you want the OpenVINO backend
+- `maskterial/{config.yaml, maskterial.pth}` for the MaskTerial backend
+- an OpenVINO IR (`.xml` + `.bin`) for the OpenVINO backend
 - a calibration reference image only if you enable color calibration
 
-You do **not** need `spectrum_inv.pth` for the default pipeline. The in-tree `phi_adapt` code is experimental and not part of the standard quick-start.
+The in-tree `phi_adapt` code is experimental and not part of the standard quick-start. For it, you will need `spectrum_inv.pth`.
 
 Example local layout if you want to keep weights under the repo root:
 
@@ -111,7 +103,6 @@ python -m quantumflake.cli predict "/path/to/images_or_glob" \
 
 Notes:
 
-- The classifier checkpoint is required because the pipeline always classifies the cropped detections.
 - `device=cpu` is the safest default for docs. Switch to `cuda:0` when your environment is configured for GPU inference.
 - `save_vis=true` is enabled by default in the bundled config.
 
@@ -234,13 +225,13 @@ quantumflake/
 
 ```bibtex
 @misc{nguyen2026qupaintphysicsawareinstructiontuning,
-      title={QuPAINT: Physics-Aware Instruction Tuning Approach to Quantum Material Discovery}, 
+      title={QuPAINT: Physics-Aware Instruction Tuning Approach to Quantum Material Discovery},
       author={Xuan-Bac Nguyen and Hoang-Quan Nguyen and Sankalp Pandey and Tim Faltermeier and Nicholas Borys and Hugh Churchill and Khoa Luu},
       year={2026},
       eprint={2602.17478},
       archivePrefix={arXiv},
       primaryClass={cs.CV},
-      url={https://arxiv.org/abs/2602.17478}, 
+      url={https://arxiv.org/abs/2602.17478},
 }
 
 @article{pandey2025cliff,
@@ -259,8 +250,8 @@ quantumflake/
 
 @ARTICLE{10684707,
   author={Nguyen, Xuan Bac and Bisht, Apoorva and Thompson, Benjamin and Churchill, Hugh and Luu, Khoa and Khan, Samee U.},
-  journal={IEEE Access}, 
-  title={Two-Dimensional Quantum Material Identification via Self-Attention and Soft-Labeling in Deep Learning}, 
+  journal={IEEE Access},
+  title={Two-Dimensional Quantum Material Identification via Self-Attention and Soft-Labeling in Deep Learning},
   year={2024},
   volume={12},
   number={},
