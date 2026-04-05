@@ -5,6 +5,18 @@
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
 [![open issues](https://img.shields.io/github/issues/uark-cviu/quantumflake.svg)](https://github.com/uark-cviu/quantumflake/issues)
 
+<p align="center">
+  <a href="https://huggingface.co/collections/uark-cviu/2d-quantum-material-characterization">
+    <img src="https://img.shields.io/badge/HuggingFace-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black" alt="HuggingFace Daily">
+  </a>
+  <a href="https://github.com/uark-cviu/quantumflake">
+    <img src="https://img.shields.io/badge/GitHub-000000?style=for-the-badge&logo=github&logoColor=white" alt="GitHub">
+  </a>
+  <a href="https://uark-cviu.github.io/projects/QuantumFlake/">
+    <img src="https://img.shields.io/badge/Webpage-blue?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Webpage">
+  </a>
+</p>
+
 [Getting Started](docs/get_started.md) |
 [Model Zoo](docs/model_zoo.md) |
 [Reporting Issues](https://github.com/uark-cviu/quantumflake/issues/new/choose)
